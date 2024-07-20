@@ -8,6 +8,7 @@ html {
     font-family: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, serif;
     scroll-behavior: smooth;
     overflow-y: hidden;
+    height: 100vh;
 }
 
 html, body {
@@ -16,35 +17,52 @@ html, body {
     color: var(--black);
 }
 
-body > main {
-    max-width: 35rem;
+body {
+    max-width: 30rem;
     margin: 0 auto;
-    padding: 0em 1em 2.5em 1em; /* T R B L */
+
+    display: flex;
+    flex-direction: column;
+
+    height: 100%;
+}
+
+body > main {
+    padding: 1em 1em 1em 1em; /* T R B L */
+    flex-grow: 1
+}
+
+body > footer {
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.9em;
 }
 
 .container {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-    box-sizing: border-box;
+    grid-gap: 5px
 }
 
 .tile {
     border: solid var(--gray) 1px;
     border-radius: 2px;
     text-align: center;
-    font-size: 4em;
+    font-size: 3em;
     aspect-ratio: 1/1;
+
+    /* Center letters in boxes */
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .tile:hover {
-    border: dashed black 1px;
+    border: dashed var(--black) 1px;
 }
 
 .tile[active=true] {
-    border: solid black 1px;
+    border: solid var(--black) 1px;
 }
 
 .tile[hole=true] {
