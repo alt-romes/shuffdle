@@ -1,0 +1,53 @@
+:root {
+    --black: #241623; /* dark_purple */
+    --gray: #c5c3bc;
+    --background: white;
+}
+
+html {
+    font-family: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, serif;
+    scroll-behavior: smooth;
+    overflow-y: hidden;
+}
+
+html, body {
+    margin: 0;
+    background: var(--background);
+    color: var(--black);
+}
+
+body > main {
+    max-width: 35rem;
+    margin: 0 auto;
+    padding: 0em 1em 2.5em 1em; /* T R B L */
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    box-sizing: border-box;
+}
+
+.tile {
+    border: solid var(--gray) 1px;
+    border-radius: 2px;
+    text-align: center;
+    font-size: 4em;
+    aspect-ratio: 1/1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.tile:hover {
+    border: dashed black 1px;
+}
+
+.tile[active=true] {
+    border: solid black 1px;
+}
+
+.tile[hole=true] {
+    color: transparent
+}
+
