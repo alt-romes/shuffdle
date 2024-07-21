@@ -20,39 +20,25 @@
 
     </head>
     <body>
-        <h1>The <span id="shuffled">Shuffdle</span> word is <span id="solution">REFER</span></h1>
+        <h1>The <span id="shuffled">Shuffdle</span> word is <span id="solution">STEAM</span></h1>
         <main>
-            <div class="container">
-                <div class="tile">F</div>
-                <div class="tile">U</div>
-                <div class="tile">U</div>
-                <div class="tile">M</div>
-                <div class="tile">F</div>
+            <div class="container" id="container"></div>
+            <script>
+                const board = ['X','N','B','J','W','G','Z','H','G','Y','Q','J','L','E','L','B','S','D','O','L','_','_','_','_','_']
+                const container = document.getElementById("container")
+                for (x of board) {
+                    const div = document.createElement("div")
+                    div.classList.add("tile")
+                    div.innerHTML = x
+                    container.appendChild(div)
 
-                <div class="tile">Y</div>
-                <div class="tile">I</div>
-                <div class="tile">M</div>
-                <div class="tile">J</div>
-                <div class="tile">Z</div>
-
-                <div class="tile">E</div>
-                <div class="tile">C</div>
-                <div class="tile">X</div>
-                <div class="tile">S</div>
-                <div class="tile">F</div>
-
-                <div class="tile">Q</div>
-                <div class="tile">R</div>
-                <div class="tile">W</div>
-                <div class="tile">D</div>
-                <div class="tile">M</div>
-
-                <div class="tile last-row-tile" hole=true>_</div>
-                <div class="tile last-row-tile" hole=true>_</div>
-                <div class="tile last-row-tile" hole=true>_</div>
-                <div class="tile last-row-tile" hole=true>_</div>
-                <div class="tile last-row-tile" hole=true>_</div>
-            </div>
+                    if (x == "_") {
+                        div.classList.add("last-row-tile")
+                        div.setAttribute("hole", true)
+                    }
+                }
+            </script>
+            <div id="moves"><span id="counter">0</span>/50</div>
         </main>
         <footer>
             <small>

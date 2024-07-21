@@ -1,5 +1,6 @@
 const print    = console.log
 const solution = document.getElementById("solution").innerHTML
+const moves    = document.getElementById("counter")
 const size     = 5
 const tiles    = document.getElementsByClassName("tile")
 const setActive = el => {
@@ -34,6 +35,9 @@ const checkWin = () => {
     }
     print("WIN!")
 }
+const countMove = () => {
+    moves.innerHTML = Number(moves.innerHTML) + 1
+}
 const move = (el, dir) => {
     const ix = Number(el.getAttribute("ix"))
     const col_ix = ix % size
@@ -44,6 +48,7 @@ const move = (el, dir) => {
         "ArrowLeft" : col_ix - 1 >= 0 ? ix - 1 : null,
       }[dir]
     if (tgt_ix != null && tiles[tgt_ix].getAttribute("hole") == "true" && tiles[ix].getAttribute("hole") != "true") {
+        countMove()
         // Update board
         tiles[tgt_ix].innerHTML = chLetter(tiles[ix].innerHTML, dir)
         tiles[ix].innerHTML = "_"

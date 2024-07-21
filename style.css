@@ -2,6 +2,7 @@
     --black: #241623; /* dark_purple */
     --gray: #c5c3bc;
     --green: green;
+    --red: red;
     --background: white;
 }
 
@@ -82,4 +83,10 @@ body > footer {
 
 #solution {
     letter-spacing: 3px;
+}
+
+#moves {
+    padding-top: 1em;
+    text-align: right;
+    color: var(--red);
 }

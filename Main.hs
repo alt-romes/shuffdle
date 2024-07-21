@@ -82,10 +82,11 @@ sampleBoard = [
               ]
 
 main = do
-  (board, nMoves) <- initStdGen >>= pure . generateBoard "REFER"
+  (board, nMoves) <- initStdGen >>= pure . generateBoard "STEAM"
   putStrLn $ "Solvable in number of moves: " ++ show nMoves
-  -- loop board
-  loop (boardFromRows sampleBoard)
+  putStrLn $ "Simple Board: " ++ boardId board
+  loop board
+  -- loop (boardFromRows sampleBoard)
 
   where
   loop game = do
@@ -125,6 +126,9 @@ boardToRows Board{size, tiles} = go 0 0 [] [] where
 
 displayBoard :: Board -> String
 displayBoard = List.intercalate "\n" . map (unwords . map show) . boardToRows
+
+boardId :: Board -> String
+boardId Board{tiles} = show $ map snd $ IM.toList tiles
 
 lastRowIsEmpty :: Board -> Bool
 lastRowIsEmpty Board{size, tiles} =
