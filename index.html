@@ -26,8 +26,11 @@
             <aside>
                 <div id="help">tutorial</div>
                 <div style="flex-grow:1"></div>
-                <div id="moves"><span id="counter">0</span>/50 moves</div>
+                <div id="counter"><span id="moves">0</span>/<span id="maxMoves">50</span> moves</div>
             </aside>
+            <div id="restart-qm" hidden>
+                <a onclick="location.reload(); return false;" style="color:var(--gray); text-decoration: underline; text-decoration-style: dotted">restart?</a>
+            </div>
             <script>
                 const board = ['T','O','M','F','D','D','D','J','F','Z','C','P','D','T','A','B','D','R','C','B','_','_','_','_','_']
                 const container = document.getElementById("container")
@@ -88,7 +91,7 @@
                 <div style="flex-grow: 1"></div>
                 <h2 class="close-modal-btn">&#10006;</h2>
             </div>
-            <p>Reconstruct the Shuffdle word in the <em>bottom row</em> with a minimal number of moves</p>
+            <p></p>
             <h4>The next daily Shuffdle puzzle will be available in 14h 53m</h4>
         </section>
         <script src="main.js"></script>

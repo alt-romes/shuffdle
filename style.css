@@ -189,6 +189,18 @@ main > aside {
     box-sizing: border-box;
 }
 
+#restart-qm {
+    text-align: right;
+    margin-top: -1em;
+    opacity: 0;
+    transition: opacity 500ms ease-in;
+    cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------------
+ * Animation
+ */
+
 .winanim {
   animation: wobble 2s ease 480ms, gelatine 0.5s 2600ms;
 }
@@ -207,7 +219,7 @@ main > aside {
 }
 
 .gelatine {
-  animation: gelatine 0.5s 600ms;
+  animation: gelatine 0.5s 0ms;
 }
 @keyframes gelatine {
   from, to { transform: scale(1, 1); }

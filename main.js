@@ -1,6 +1,8 @@
 const print    = console.log
 const solution = document.getElementById("solution").innerHTML
-const moves    = document.getElementById("counter")
+const moves    = document.getElementById("moves")
+const counter  = document.getElementById("counter")
+const restartq = document.getElementById("restart-qm")
 const size     = 5
 const tiles    = document.getElementsByClassName("tile")
 const help     = document.getElementById("help-modal")
@@ -79,10 +81,25 @@ const checkWin = () => {
     })
     setTimeout(() => openModal(victory), 3500 /* delay to finish winanim animation */)
 }
+const flashMaxReached = () => {
+    counter.classList.remove("gelatine")
+    void counter.offsetWidth // Trigger reflow
+    counter.classList.add("gelatine")
+
+    restartq.hidden = false;
+    void restartq.offsetWidth;
+    restartq.style.opacity = 1;
+}
+const maxMoves = Number(document.getElementById("maxMoves").innerHTML)
+const getMoves = () => Number(moves.innerHTML)
 const countMove = () => {
-    moves.innerHTML = Number(moves.innerHTML) + 1
+    moves.innerHTML = getMoves() + 1
 }
 const move = (el, dir) => {
+    if (getMoves() >= maxMoves) {
+        flashMaxReached();
+        return;
+    }
     const ix = Number(el.getAttribute("ix"))
     const col_ix = ix % size
     const tgt_ix =
