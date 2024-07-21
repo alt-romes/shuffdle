@@ -95,7 +95,7 @@ const move = (el, dir) => {
         "ArrowDown" : ix + size < size*size ? ix + size : null,
         "s"         : ix + size < size*size ? ix + size : null,
 
-        "arrowleft" : col_ix - 1 >= 0 ? ix - 1 : null,
+        "ArrowLeft" : col_ix - 1 >= 0 ? ix - 1 : null,
         "a"         : col_ix - 1 >= 0 ? ix - 1 : null,
       }[dir]
     if (tgt_ix != null && tiles[tgt_ix].getAttribute("hole") == "true" && tiles[ix].getAttribute("hole") != "true") {

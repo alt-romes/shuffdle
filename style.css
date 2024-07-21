@@ -117,7 +117,7 @@ main > aside {
     text-decoration: underline;
     text-underline-position: under;
 
-    text-decoration-color: rgba(0,0,0,0);
+    text-decoration-color: rgba(0,0,0,0.2);
     transition: text-decoration-color 200ms;
 }
 #help:hover {
@@ -154,8 +154,8 @@ main > aside {
     position: absolute;
     top: 17.5%;
     bottom: 17.5%;
-    left: 17.5%;
-    right: 17.5%;
+    left: 33%;
+    right: 33%;
 }
 
 .close-modal-btn {
@@ -163,6 +163,7 @@ main > aside {
 }
 
 #victory-modal.modal {
+    text-align: center;
     box-shadow:
         rgb(31, 193, 27) 0px 0px 0px 2px inset,
         rgb(255, 255, 255) 10px -10px 0px -3px,
@@ -282,6 +283,15 @@ main > aside {
  */
 
 /* Larger modals */
+@media only screen and (max-width: 1024px) {
+  .modal {
+    top: 17.5%;
+    bottom: 17.5%;
+    left: 17.5%;
+    right: 17.5%;
+  }
+}
+
 @media only screen and (max-width: 640px) {
   .modal {
     top: 5%;
