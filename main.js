@@ -1,4 +1,5 @@
 const print    = console.log
+const solution = document.getElementById("solution").innerHTML
 const size     = 5
 const tiles    = document.getElementsByClassName("tile")
 const setActive = el => {
@@ -26,6 +27,13 @@ const chLetter = (l, dir) => {
         }[dir]
     return c(l)
 }
+const checkWin = () => {
+    for (let i = size*(size - 1); i<size*size; i++) {
+        if (tiles[i].getAttribute("correct") != "true")
+            return
+    }
+    print("WIN!")
+}
 const move = (el, dir) => {
     const ix = Number(el.getAttribute("ix"))
     const col_ix = ix % size
@@ -43,6 +51,12 @@ const move = (el, dir) => {
         tiles[ix].setAttribute("hole", true)
         // Set the target as the active piece
         setActive(tiles[tgt_ix])
+        // Highlight green right letters
+        const tgt_col_ix = tgt_ix % size
+        if (tiles[tgt_ix].innerHTML == solution[tgt_col_ix] && tgt_ix >= size*(size-1))
+            tiles[tgt_ix].setAttribute("correct", true)
+        // Clear existing highlight
+        tiles[ix].setAttribute("correct", false)
     }
 }
 
@@ -52,3 +66,4 @@ for (let i=0; i<tiles.length; i++) {
     t.addEventListener("click", e => setActive(e.target))
 }
 document.addEventListener("keydown", keydown)
+

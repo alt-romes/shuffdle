@@ -1,12 +1,12 @@
 :root {
     --black: #241623; /* dark_purple */
     --gray: #c5c3bc;
+    --green: green;
     --background: white;
 }
 
 html {
     font-family: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, serif;
-    scroll-behavior: smooth;
     overflow-y: hidden;
     height: 100vh;
 }
@@ -18,6 +18,8 @@ html, body {
 }
 
 body {
+    text-align: center;
+
     max-width: 30rem;
     margin: 0 auto;
 
@@ -35,7 +37,6 @@ body > main {
 body > footer {
     padding: 1rem;
     text-align: center;
-    font-size: 0.9em;
 }
 
 .container {
@@ -50,6 +51,7 @@ body > footer {
     text-align: center;
     font-size: 3em;
     aspect-ratio: 1/1;
+    cursor: pointer;
 
     /* Center letters in boxes */
     display: flex;
@@ -58,14 +60,26 @@ body > footer {
 }
 
 .tile:hover {
-    border: dashed var(--black) 1px;
+    border-style: dashed !important;
 }
 
 .tile[active=true] {
-    border: solid var(--black) 1px;
+    border: solid var(--black) 2px;
+}
+
+.tile[correct=true] {
+    border: solid var(--green) 2px;
 }
 
 .tile[hole=true] {
     color: transparent
 }
 
+#shuffled {
+    text-decoration: underline;
+    text-underline-position: under;
+}
+
+#solution {
+    letter-spacing: 3px;
+}
