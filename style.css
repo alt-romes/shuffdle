@@ -7,6 +7,10 @@
     --background: white;
 }
 
+* {
+    box-sizing: border-box;
+}
+
 html {
     font-family: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, serif;
     overflow-y: hidden;
@@ -120,12 +124,6 @@ main > aside {
 }
 
 .modal {
-    width: 35rem;
-
-    position: absolute;
-    top: 17.5%;
-    bottom: 17.5%;
-    left: calc(50% - 17.5rem);
     box-sizing: border-box;
 
     text-align: left;
@@ -150,10 +148,22 @@ main > aside {
     font-weight: normal;
 
     overflow-y: auto;
+    font-size: 1.1em;
+
+    position: absolute;
+    top: 17.5%;
+    bottom: 17.5%;
+    left: 17.5%;
+    right: 17.5%;
 }
 
-.modal {
-    font-size: 1.1em;
+@media only screen and (max-width: 600px) {
+  .modal {
+    top: 5%;
+    bottom: 5%;
+    left: 5%;
+    right: 5%;
+  }
 }
 
 #victory-modal.modal {

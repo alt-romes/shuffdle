@@ -114,7 +114,7 @@ document.addEventListener("keydown", keydown)
 document.getElementById("help").addEventListener("click", () => openModal(help));
 wall.addEventListener("click", e => closeModals());
 document.addEventListener("keydown", e => { /* event listeners stack */
-  if (e.key === "Escape" && modal.style.opacity == "1") {
+  if (e.key === "Escape" && (help.style.opacity == "1" || victory.style.opacity == "1")) {
     closeModals();
   }
 });
