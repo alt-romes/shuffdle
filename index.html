@@ -51,7 +51,11 @@
         </footer>
         <div hidden id="wall"></div>
         <section id="help-modal" class="modal" style="opacity: 0">
-            <h2>How To Play</h2>
+            <div style="display: flex;">
+                <h2>How To Play</h2>
+                <div style="flex-grow: 1"></div>
+                <h2 class="close-modal-btn">&#10006;</h2>
+            </div>
             <p>Reconstruct the daily Shuffdle word in the <em>bottom row</em> with a minimal number of moves</p>
             <ul>
                 <li>Letters can only slide to empty spaces</li>
@@ -67,7 +71,7 @@
                 <div class="tile">G</div>
             </div>
             <small>Moving to the right increments the letter</small>
-            <br/>
+            <br></br>
             <div class="example" style="">
                 <div class="tile">F</div>
                 <div class="tile">T</div>
@@ -76,10 +80,13 @@
                 <div class="tile">G</div>
             </div>
             <small>Moving to the left decrements the letter</small>
-            <br/>
         </section>
         <section id="victory-modal" class="modal" style="opacity: 0">
-            <h2>Congratulations!</h2>
+            <div style="display: flex;">
+                <h2>Congratulations!</h2>
+                <div style="flex-grow: 1"></div>
+                <h2 class="close-modal-btn">&#10006;</h2>
+            </div>
             <p>Reconstruct the Shuffdle word in the <em>bottom row</em> with a minimal number of moves</p>
             <h4>The next daily Shuffdle puzzle will be available in 14h 53m</h4>
         </section>

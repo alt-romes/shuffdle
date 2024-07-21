@@ -41,6 +41,10 @@ const keydown = e => {
         case "ArrowRight": break;
         case "ArrowUp"   : break;
         case "ArrowDown" : break;
+        case "w"         : break;
+        case "d"         : break;
+        case "s"         : break;
+        case "a"         : break;
         default          : return;
     }
     const t = document.querySelector("main .tile[active=true]")
@@ -54,7 +58,11 @@ const chLetter = (l, dir) => {
         { "ArrowUp"   : previousLetter,
           "ArrowRight": nextLetter,
           "ArrowDown" : nextLetter,
-          "ArrowLeft" : previousLetter
+          "ArrowLeft" : previousLetter,
+          "w": previousLetter,
+          "d": nextLetter,
+          "s": nextLetter,
+          "a": previousLetter,
         }[dir]
     return c(l)
 }
@@ -79,9 +87,16 @@ const move = (el, dir) => {
     const col_ix = ix % size
     const tgt_ix =
       { "ArrowUp"   : ix - size >= 0 ? ix - size : null,
+        "w"         : ix - size >= 0 ? ix - size : null,
+
         "ArrowRight": col_ix + 1 < size ? ix + 1 : null,
+        "d"         : col_ix + 1 < size ? ix + 1 : null,
+
         "ArrowDown" : ix + size < size*size ? ix + size : null,
-        "ArrowLeft" : col_ix - 1 >= 0 ? ix - 1 : null,
+        "s"         : ix + size < size*size ? ix + size : null,
+
+        "arrowleft" : col_ix - 1 >= 0 ? ix - 1 : null,
+        "a"         : col_ix - 1 >= 0 ? ix - 1 : null,
       }[dir]
     if (tgt_ix != null && tiles[tgt_ix].getAttribute("hole") == "true" && tiles[ix].getAttribute("hole") != "true") {
         countMove()
@@ -113,8 +128,9 @@ document.addEventListener("keydown", keydown)
 // Modal
 document.getElementById("help").addEventListener("click", () => openModal(help));
 wall.addEventListener("click", e => closeModals());
+[...document.getElementsByClassName("close-modal-btn")].map(e => e.addEventListener("click", () => closeModals()));
 document.addEventListener("keydown", e => { /* event listeners stack */
   if (e.key === "Escape" && (help.style.opacity == "1" || victory.style.opacity == "1")) {
     closeModals();
   }
-});
+})

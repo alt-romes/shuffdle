@@ -7,8 +7,8 @@
     --background: white;
 }
 
-* {
-    box-sizing: border-box;
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 html {
@@ -41,7 +41,8 @@ body > main {
     max-width: 28rem;
     width: 100%;
     padding: 1em 1em 1em 1em; /* T R B L */
-    flex-grow: 1
+    flex-grow: 1;
+    box-sizing: border-box;
 }
 
 body > footer {
@@ -52,14 +53,14 @@ body > footer {
 .container {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-    grid-gap: 5px
+    grid-gap: 5px;
 }
 
 .tile {
     border: solid var(--gray) 1px;
     border-radius: 2px;
     text-align: center;
-    font-size: 3em;
+    font-size: 2.5em;
     aspect-ratio: 1/1;
     cursor: pointer;
 
@@ -87,8 +88,8 @@ body > footer {
 
 #shuffled {
     font-weight: bold;
-    text-decoration: underline;
-    text-underline-position: under;
+    /* text-decoration: underline; */
+    /* text-underline-position: under; */
 }
 
 #solution {
@@ -157,13 +158,8 @@ main > aside {
     right: 17.5%;
 }
 
-@media only screen and (max-width: 600px) {
-  .modal {
-    top: 5%;
-    bottom: 5%;
-    left: 5%;
-    right: 5%;
-  }
+.close-modal-btn {
+    cursor: pointer;
 }
 
 #victory-modal.modal {
@@ -280,3 +276,31 @@ main > aside {
     opacity: 1
   }
 }
+
+/* --------------------------------------------------------------------------------
+   Responsiveness
+ */
+
+/* Larger modals */
+@media only screen and (max-width: 640px) {
+  .modal {
+    top: 5%;
+    bottom: 5%;
+    left: 5%;
+    right: 5%;
+  }
+}
+
+/* Next two: don't make letters too big for boxes, causes problem with box-sizing */
+@media only screen and (max-width: 445px) {
+  .tile {
+      font-size: 2em;
+  }
+}
+
+@media only screen and (max-width: 295px) {
+  .tile {
+      font-size: 1.5em;
+  }
+}
+
