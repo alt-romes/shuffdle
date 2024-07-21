@@ -3,6 +3,7 @@
     --gray: #c5c3bc;
     --green: green;
     --red: red;
+    --info: lightblue;
     --background: white;
 }
 
@@ -21,16 +22,20 @@ html, body {
 body {
     text-align: center;
 
-    max-width: 30rem;
-    margin: 0 auto;
-
     display: flex;
     flex-direction: column;
 
     height: 100%;
 }
 
+body > h1 {
+    font-weight: normal
+}
+
 body > main {
+    margin: 0 auto;
+    max-width: 28rem;
+    width: 100%;
     padding: 1em 1em 1em 1em; /* T R B L */
     flex-grow: 1
 }
@@ -77,16 +82,191 @@ body > footer {
 }
 
 #shuffled {
+    font-weight: bold;
     text-decoration: underline;
     text-underline-position: under;
 }
 
 #solution {
+    font-weight: bold;
     letter-spacing: 3px;
 }
 
+/* Toolbar */
+main > aside {
+    padding: 1rem 0;
+    display: flex;
+    justify-content: right;
+    align-items: stretch;
+    gap: 1em;
+    font-weight: bold;
+}
+
 #moves {
-    padding-top: 1em;
-    text-align: right;
+    background-color: var(--background);
     color: var(--red);
+}
+
+#help {
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-position: under;
+
+    text-decoration-color: rgba(0,0,0,0);
+    transition: text-decoration-color 200ms;
+}
+#help:hover {
+    text-decoration-color: rgba(0,0,0,1);
+}
+
+.modal {
+    width: 35rem;
+
+    position: absolute;
+    top: 17.5%;
+    bottom: 17.5%;
+    left: calc(50% - 17.5rem);
+    box-sizing: border-box;
+
+    text-align: left;
+    background-color: var(--background);
+
+    box-shadow:
+        blue 0px 0px 0px 2px inset,
+        rgb(255, 255, 255) 10px -10px 0px -3px,
+        rgb(31, 193, 27) 10px -10px,
+        rgb(255, 255, 255) 20px -20px 0px -3px;
+        /* rgb(255, 217, 19) 20px -20px, */
+        /* rgb(255, 255, 255) 30px -30px 0px -3px; */
+
+    padding: 1rem 2rem;
+    border-radius: 1px;
+
+    transition: opacity 300ms ease-in;
+    z-index: 2;
+    pointer-events: none; /* <-- Overwritten by JS */
+
+    font-family: Optima, Candara, 'Noto Sans', source-sans-pro, sans-serif;
+    font-weight: normal;
+
+    overflow-y: auto;
+}
+
+.modal {
+    font-size: 1.1em;
+}
+
+#victory-modal.modal {
+    box-shadow:
+        rgb(31, 193, 27) 0px 0px 0px 2px inset,
+        rgb(255, 255, 255) 10px -10px 0px -3px,
+        blue 10px -10px;
+}
+
+.dimmable {
+    transition: opacity 300ms ease-in;
+}
+
+#wall {
+    position: absolute; top: 0; left: 0; width:100%; height:100%
+}
+
+.example {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.example > .tile {
+    height: 1em;
+    box-sizing: border-box;
+}
+
+.winanim {
+  animation: wobble 2s ease 480ms, gelatine 0.5s 2600ms;
+}
+
+.wobble {
+  animation: wobble 2s ease 480ms;
+}
+@keyframes wobble {
+  0% { transform: translateX(0%); }
+  15% { transform: translateX(-25%) rotate(-5deg); }
+  30% { transform: translateX(20%) rotate(3deg); }
+  45% { transform: translateX(-15%) rotate(-3deg); }
+  60% { transform: translateX(10%) rotate(2deg); }
+  75% { transform: translateX(-5%) rotate(-1deg); }
+  100% { transform: translateX(0%); }
+}
+
+.gelatine {
+  animation: gelatine 0.5s 600ms;
+}
+@keyframes gelatine {
+  from, to { transform: scale(1, 1); }
+  25% { transform: scale(0.9, 1.1); }
+  50% { transform: scale(1.1, 0.9); }
+  75% { transform: scale(0.95, 1.05); }
+}
+
+.roll-out {
+  animation: roll-out 5s ease infinite;
+}
+@keyframes roll-out {
+  0% {
+    opacity: 1;
+    transform: translateX(0px);
+  }
+  25% {
+    opacity: 1;
+    transform: translateX(0px);
+  }
+  75% {
+    opacity: 0;
+    transform: translateX(160%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(160%);
+  }
+}
+
+.sym-roll-out {
+  animation: sym-roll-out 5s ease infinite;
+}
+@keyframes sym-roll-out {
+  0% {
+    opacity: 1;
+    transform: translateX(0px);
+  }
+  25% {
+    opacity: 1;
+    transform: translateX(0px);
+  }
+  75% {
+    opacity: 0;
+    transform: translateX(-160%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-160%);
+  }
+}
+
+.ex-fade-in {
+  animation: ex-fade-in 5s ease infinite;
+}
+@keyframes ex-fade-in {
+  0% {
+    opacity: 0
+  }
+  50% {
+    opacity: 0
+  }
+  75% {
+    opacity: 1
+  }
+  100% {
+    opacity: 1
+  }
 }

@@ -4,25 +4,30 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Shuffdle</title>
-        <meta name="description" content="A daily game with a shuffled word">
+        <meta name="description" content="Slide the shuffdle word into place">
         <link rel="stylesheet" href="style.css" />
 
         <!-- open graph -->
-        <meta property="og:title" content="Shuffled" />
-        <meta property="og:description" content="A daily game with a shuffled word" />
+        <meta property="og:title" content="Shuffdle" />
+        <meta property="og:description" content="Slide the shuffdle word into place" />
 
 
-        <!-- TODO: favicon -->
-        <!-- <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"> -->
-        <!-- <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"> -->
-        <!-- <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"> -->
-        <!-- <link rel="manifest" href="/site.webmanifest"> -->
+        <!-- favicon -->
+        <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+        <link rel="manifest" href="favicon/site.webmanifest">
 
     </head>
     <body>
-        <h1>The <span id="shuffled">Shuffdle</span> word is <span id="solution">CRATE</span></h1>
-        <main>
+        <h1 class="dimmable">The <span id="shuffled">Shuffdle</span> word is <span id="solution">CRATE</span></h1>
+        <main class="dimmable">
             <div class="container" id="container"></div>
+            <aside>
+                <div id="help">tutorial</div>
+                <div style="flex-grow:1"></div>
+                <div id="moves"><span id="counter">0</span>/50 moves</div>
+            </aside>
             <script>
                 const board = ['T','O','M','F','D','D','D','J','F','Z','C','P','D','T','A','B','D','R','C','B','_','_','_','_','_']
                 const container = document.getElementById("container")
@@ -38,13 +43,59 @@
                     }
                 }
             </script>
-            <div id="moves"><span id="counter">0</span>/50</div>
         </main>
-        <footer>
+        <footer class="dimmable">
             <small>
                 Rodrigo Mesquita &copy; 2024
             </small>
         </footer>
+        <div hidden id="wall"></div>
+        <section id="help-modal" class="modal" style="opacity: 0">
+            <h2>How To Play</h2>
+            <p>Reconstruct the daily Shuffdle word in the <em>bottom row</em> with a minimal number of moves</p>
+            <ul>
+                <li>Letters can only slide to empty spaces</li>
+                <li>Sliding <strong>down</strong> or <strong>right</strong> increases to the <em>next</em> letter</li>
+                <li>Sliding <strong>up</strong> or <strong>left</strong> decreases to the <em>previous</em> letter</li>
+            </ul>
+            <h4>Examples</h4>
+            <div class="example">
+                <div class="tile"><span class="roll-out">A</span></div>
+                <div class="tile" hole=true>_</div>
+                <div class="tile">C</div>
+                <div style="flex-grow:1"></div>
+                <div>results in</div>
+                <div style="flex-grow:1"></div>
+                <div class="tile" hole=true>_</div>
+                <div class="tile"><span class="ex-fade-in">B</span></div>
+                <div class="tile">C</div>
+            </div>
+            <small>Moving to the right increments the letter</small>
+            <br></br>
+            <div class="example" style="">
+                <div class="tile" hole=true>_</div>
+                <div class="tile"><span class="sym-roll-out">B</span></div>
+                <div class="tile">C</div>
+                <div style="flex-grow:1"></div>
+                <div>results in</div>
+                <div style="flex-grow:1"></div>
+                <div class="tile"><span class="ex-fade-in">A</span></div>
+                <div class="tile" hole=true>_</div>
+                <div class="tile">C</div>
+            </div>
+            <small>Moving to the left decrements the letter</small>
+            <br></br>
+        </section>
+        <section id="victory-modal" class="modal" style="opacity: 0">
+            <h2>Congratulations!</h2>
+            <p>Reconstruct the Shuffdle word in the <em>bottom row</em> with a minimal number of moves</p>
+            <ul>
+                <li>Letters can only slide to empty spaces</li>
+                <li>Sliding <strong>down</strong> or <strong>right</strong> increases to the <em>next</em> letter</li>
+                <li>Sliding <strong>up</strong> or <strong>left</strong> decreases to the <em>previous</em> letter</li>
+            </ul>
+            <h4>The next daily Shuffdle puzzle will be available in 14h53m</h4>
+        </section>
         <script src="main.js"></script>
     </body>
 </html>

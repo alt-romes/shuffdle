@@ -3,6 +3,34 @@ const solution = document.getElementById("solution").innerHTML
 const moves    = document.getElementById("counter")
 const size     = 5
 const tiles    = document.getElementsByClassName("tile")
+const help     = document.getElementById("help-modal")
+const victory  = document.getElementById("victory-modal")
+const overlay  = document.getElementById("wall")
+
+// --------------------------------------------------------------------------------
+// Modals
+
+const dim = () => [...document.getElementsByClassName("dimmable")].map(e => e.style.opacity = 0.3)
+const undim = () => [...document.getElementsByClassName("dimmable")].map(e => e.style.opacity = 1)
+const openModal = (m) => {
+    dim()
+    m.style.opacity = 1;
+    m.style.pointerEvents = "inherit"
+    wall.hidden = false;
+}
+const closeModal = (m) => {
+    undim()
+    m.style.opacity = 0;
+    m.style.pointerEvents = "none"
+    wall.hidden = true;
+}
+const closeModals = () => {
+    closeModal(help)
+    closeModal(victory)
+}
+
+// --------------------------------------------------------------------------------
+
 const setActive = el => {
     [...tiles].map(t => t.setAttribute("active", false))
     el.setAttribute("active", true)
@@ -15,13 +43,15 @@ const keydown = e => {
         case "ArrowDown" : break;
         default          : return;
     }
-    move(document.querySelector("[active=true]"), e.key)
+    const t = document.querySelector("main .tile[active=true]")
+    if (t != null)
+        move(t, e.key)
 }
 const previousLetter = l => l == "A" ? "Z" : String.fromCharCode(l.charCodeAt(0) - 1);
 const nextLetter = l => l == "Z" ? "A" : String.fromCharCode(l.charCodeAt(0) + 1);
 const chLetter = (l, dir) => {
     const c =
-        { "ArrowUp": previousLetter,
+        { "ArrowUp"   : previousLetter,
           "ArrowRight": nextLetter,
           "ArrowDown" : nextLetter,
           "ArrowLeft" : previousLetter
@@ -33,7 +63,13 @@ const checkWin = () => {
         if (tiles[i].getAttribute("correct") != "true")
             return
     }
-    print("WIN!")
+    // Win!
+    [...document.getElementsByClassName("last-row-tile")].map(e => {
+        e.classList.remove("winanim") // We want to restart the animation if someone moves after the solution.
+        void e.offsetWidth // Trigger reflow: necessary to restart animation if class was already set.
+        e.classList.add("winanim")
+    })
+    setTimeout(() => openModal(victory), 3500 /* delay to finish winanim animation */)
 }
 const countMove = () => {
     moves.innerHTML = Number(moves.innerHTML) + 1
@@ -58,8 +94,10 @@ const move = (el, dir) => {
         setActive(tiles[tgt_ix])
         // Highlight green right letters
         const tgt_col_ix = tgt_ix % size
-        if (tiles[tgt_ix].innerHTML == solution[tgt_col_ix] && tgt_ix >= size*(size-1))
+        if (tiles[tgt_ix].innerHTML == solution[tgt_col_ix] && tgt_ix >= size*(size-1)) {
             tiles[tgt_ix].setAttribute("correct", true)
+            checkWin()
+        }
         // Clear existing highlight
         tiles[ix].setAttribute("correct", false)
     }
@@ -72,3 +110,11 @@ for (let i=0; i<tiles.length; i++) {
 }
 document.addEventListener("keydown", keydown)
 
+// Modal
+document.getElementById("help").addEventListener("click", () => openModal(help));
+wall.addEventListener("click", e => closeModals());
+document.addEventListener("keydown", e => { /* event listeners stack */
+  if (e.key === "Escape" && modal.style.opacity == "1") {
+    closeModals();
+  }
+});
