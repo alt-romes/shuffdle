@@ -63,9 +63,10 @@ generateBoard word g = (Board{size, tiles}, nMoves) where
       | otherwise
       = let (ix,rg') = uniformR (0,size*size-1) rg
             (mov,rg'') = uniformR (minBound @Direction, maxBound @Direction) rg'
-         in if ix >= size*(size-2) && ix < size*(size-1) {- is in fourth row -}
-               && mov == D then loop b nm rg'' {- don't try to push a piece in the fourth row down -}
-            else
+         in
+         -- in if ix >= size*(size-2) && ix < size*(size-1) {- is in fourth row -}
+         --       && mov == D then loop b nm rg'' {- don't try to push a piece in the fourth row down -}
+         --    else
               let (b',nm') = maybe (b,nm) (,nm+1) $ move ix mov b
                in loop b' nm' rg''
 
@@ -82,7 +83,7 @@ sampleBoard = [
               ]
 
 main = do
-  (board, nMoves) <- initStdGen >>= pure . generateBoard "STEAM"
+  (board, nMoves) <- initStdGen >>= pure . generateBoard "CRATE"
   putStrLn $ "Solvable in number of moves: " ++ show nMoves
   putStrLn $ "Simple Board: " ++ boardId board
   loop board
