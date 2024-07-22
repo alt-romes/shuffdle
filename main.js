@@ -115,11 +115,6 @@ const move = (el, dir) => {
         "ArrowLeft" : col_ix - 1 >= 0 ? ix - 1 : null,
         "a"         : col_ix - 1 >= 0 ? ix - 1 : null,
       }[dir]
-    print(ix)
-    print(dir)
-    print(tgt_ix)
-    print(tiles[ix].getAttribute("hole"))
-    print(tiles[tgt_ix].getAttribute("hole"))
     if (tgt_ix != null && tiles[tgt_ix].getAttribute("hole") == "true" &&
             tiles[ix].getAttribute("hole") != "true") {
         countMove()
@@ -190,7 +185,6 @@ const validDropDirection = (orig, tgt) => {
         const dir = validDropDirection(origin_ix, target_ix)
         if (dir != null && ev.target.getAttribute("hole") == "true") {
             ev.preventDefault();
-            print("Moving " + origin_ix + " in dir " + dir);
             move(document.querySelector("#board-container .tile[ix=\""+origin_ix+"\"]"), dir)
         }
     });
@@ -202,6 +196,23 @@ const validDropDirection = (orig, tgt) => {
                 ev.target.getAttribute("hole") == "true") {
             ev.preventDefault();
             ev.dataTransfer.dropEffect = "move"
+        }
+    });
+
+    /* Touch Events */
+    tile.addEventListener("touchstart", ev => {
+        setActive(ev.target)
+    });
+
+    tile.addEventListener("touchend", ev => {
+        const origin_ix = Number(ev.target.getAttribute("ix"));
+        const touchAtEnd = ev.changedTouches[0]
+        const targetEl = document.elementFromPoint(touchAtEnd.pageX, touchAtEnd.pageY)
+        const target_ix = Number(targetEl.getAttribute("ix"))
+        const dir = validDropDirection(origin_ix, target_ix)
+        if (dir != null && targetEl.getAttribute("hole") == "true") {
+            ev.preventDefault();
+            move(document.querySelector("#board-container .tile[ix=\""+origin_ix+"\"]"), dir)
         }
     });
 

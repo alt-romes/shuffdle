@@ -40,7 +40,7 @@ body > main {
     margin: 0 auto;
     max-width: 28rem;
     width: 100%;
-    padding: 1em 1em 1em 1em; /* T R B L */
+    padding: 0em 1em 1em 1em; /* T R B L */
     flex-grow: 1;
     box-sizing: border-box;
 }
@@ -54,6 +54,9 @@ body > footer {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
     grid-gap: 5px;
+    touch-action: none; /* Don't allow scrolling while touching the grid */
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .tile {
@@ -154,8 +157,8 @@ main > aside {
     position: absolute;
     top: 17.5%;
     bottom: 17.5%;
-    left: 33%;
-    right: 33%;
+    left: 25%;
+    right: 25%;
 }
 
 .close-modal-btn {
@@ -317,6 +320,10 @@ main > aside {
 @media only screen and (max-width: 445px) {
   .tile {
       font-size: 2em;
+  }
+
+  body > h1 {
+      font-size: 1.75em;
   }
 }
 
