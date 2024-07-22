@@ -165,9 +165,6 @@ const move = (el, dir) => {
         tiles[ix].innerHTML = "_"
         tiles[tgt_ix].setAttribute("hole", false)
         tiles[ix].setAttribute("hole", true)
-        // Update draggable (holes aren't draggable)
-        tiles[tgt_ix].draggable = true
-        tiles[ix].draggable = false
         // Set the target as the active piece
         setActive(tiles[tgt_ix])
         // Highlight green right letters
@@ -213,31 +210,26 @@ const validDropDirection = (orig, tgt) => {
         return null
 }
 [...document.querySelectorAll("#board-container .tile")].forEach(tile => {
-    if (tile.getAttribute("hole") != "true")
-        tile.draggable = true;
+    tile.draggable = true;
     tile.addEventListener("dragstart", ev => {
+        ev.dataTransfer.effectAllowed = "move"
         ev.dataTransfer.setData("text/plain", ev.target.getAttribute("ix"))
-        ev.dataTransfer.effectsAllowed = "move"
         setActive(ev.target)
     });
 
+    tile.addEventListener("dragover", ev => {
+        ev.preventDefault();
+    });
+
     tile.addEventListener("drop", ev => {
+        ev.dataTransfer.dropEffect = "move"
         const origin_ix = Number(ev.dataTransfer.getData("text/plain"));
         const target_ix = Number(ev.target.getAttribute("ix"));
         const dir = validDropDirection(origin_ix, target_ix)
         if (dir != null && ev.target.getAttribute("hole") == "true") {
             ev.preventDefault();
-            move(document.querySelector("#board-container .tile[ix=\""+origin_ix+"\"]"), dir)
-        }
-    });
-
-    tile.addEventListener("dragover", ev => {
-        const origin_ix = Number(ev.dataTransfer.getData("text/plain"));
-        const target_ix = Number(ev.target.getAttribute("ix"));
-        if (validDropDirection(origin_ix, target_ix) != null &&
-                ev.target.getAttribute("hole") == "true") {
-            ev.preventDefault();
             ev.dataTransfer.dropEffect = "move"
+            move(document.querySelector("#board-container .tile[ix=\""+origin_ix+"\"]"), dir)
         }
     });
 
