@@ -12,5 +12,6 @@ BOARD=$2
 echo "WORD: $WORD"
 echo "BOARD: $BOARD"
 
-cat index.html | sed "s/the_word_goal = .*$/the_word_goal = \"$WORD\"/" | sed "s/the_board_id = .*$/the_board_id = $BOARD/"
+sed -i.bkp "s/the_word_goal = .*$/the_word_goal = \"$WORD\"/" index.html
+sed -i.bkp "s/the_board_id = .*$/the_board_id = $BOARD/" index.html
 
