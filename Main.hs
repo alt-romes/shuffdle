@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedRecordDot, RecordWildCards, LambdaCase, TypeApplications, ViewPatterns #-}
 
+import System.Environment
+import Control.Concurrent
+import Control.Concurrent.MVar
 import qualified Data.IntMap as IM
 -- import qualified Data.IntSet as IS
 import qualified Data.List as List
@@ -81,13 +84,34 @@ sampleBoard = [
   [With 'Q', With 'R', With 'W', With 'D', With 'M'],
   [Empty, Empty, Empty, Empty, Empty]
               ]
-
 main = do
-  (board, nMoves) <- initStdGen >>= pure . generateBoard "CRATE"
-  putStrLn $ "Solvable in number of moves: " ++ show nMoves
-  putStrLn $ "Simple Board: " ++ boardId board
-  loop board
-  -- loop (boardFromRows sampleBoard)
+    ls <- lines <$> readFile "wordle-La.txt"
+    wordIx <- randomRIO (0, length ls - 1)
+    let word = ls !! wordIx
+    putStrLn $ "target-word:" ++ word
+    boardSyn <- newEmptyMVar
+    isDone   <- newMVar False
+    let tryGenBoard = do
+          genTid <- forkIO $ do
+            -- Must be forced otherwise the time will be spent after taking from the MVar!
+            (!b,!m) <- generateBoard word <$> initStdGen
+            modifyMVar isDone (\_ -> pure (True, ()))
+            putMVar boardSyn (b,m)
+          void $ forkIO $ do
+            -- After half a minute kill the generation
+            threadDelay (30*1000*1000)
+            done <- readMVar isDone
+            when (not done) $ do
+              putStrLn "Retrying..."
+              killThread genTid
+              tryGenBoard
+    tryGenBoard
+    (board, nMoves) <- takeMVar boardSyn
+    putStrLn $ "board-id:" ++ boardId board
+    putStrLn $ "Constructing the solution took " ++ show nMoves ++ " moves"
+    --
+    -- loop board
+    -- loop (boardFromRows sampleBoard)
 
   where
   loop game = do
