@@ -127,9 +127,7 @@ const checkWin = () => {
     const sharePhrase = "Shuffdle " + now.getDate() + "/" + now.getMonth() + " " + solution + " in " + myMoves + "/50 moves"
     const writeToClipboard = () => shareVictory.innerHTML = sharePhrase
 
-    shareVictory.addEventListener("click", () => {
-        writeToClipboard()
-    })
+    shareVictory.addEventListener("click", writeToClipboard)
 }
 const flashMaxReached = () => {
     counter.classList.remove("gelatine")
