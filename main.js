@@ -96,9 +96,9 @@ const checkWin = () => {
 
     /* Populate win screen */
     const myMoves = getMoves()
-    const highScore = getHighScore()
     document.getElementById("victory-count").innerHTML = myMoves
-    document.getElementById("highscore-count").innerHTML = highScore
+    // const highScore = getHighScore()
+    // document.getElementById("highscore-count").innerHTML = highScore
     
     const now = new Date();
     const secondsToNextMinute = 60 - now.getSeconds()
@@ -108,13 +108,13 @@ const checkWin = () => {
         setInterval(updateTimeToMidnight, 60*1000 /* repeat every minute */)},
     secondsToNextMinute * 1000);
 
-    document.getElementById("custom-victory-msg").innerHTML =
-        myMoves > highScore ?
-            "It looks like you could still do it in fewer moves!" :
-        myMoves == highScore ?
-            "You've done as well as the best solution so far. Is it possible to do better?" :
-        /* otherwise */
-            "You've just set a <em>new highscore</em> for minimum number of moves!"
+    // document.getElementById("custom-victory-msg").innerHTML =
+    //     myMoves > highScore ?
+    //         "It looks like you could still do it in fewer moves!" :
+    //     myMoves == highScore ?
+    //         "You've done as well as the best solution so far. Is it possible to do better?" :
+    //     /* otherwise */
+    //         "You've just set a <em>new highscore</em> for minimum number of moves!"
 
     const shareVictory = document.getElementById("share-victory")
 
