@@ -115,13 +115,22 @@ const move = (el, dir) => {
         "ArrowLeft" : col_ix - 1 >= 0 ? ix - 1 : null,
         "a"         : col_ix - 1 >= 0 ? ix - 1 : null,
       }[dir]
-    if (tgt_ix != null && tiles[tgt_ix].getAttribute("hole") == "true" && tiles[ix].getAttribute("hole") != "true") {
+    print(ix)
+    print(dir)
+    print(tgt_ix)
+    print(tiles[ix].getAttribute("hole"))
+    print(tiles[tgt_ix].getAttribute("hole"))
+    if (tgt_ix != null && tiles[tgt_ix].getAttribute("hole") == "true" &&
+            tiles[ix].getAttribute("hole") != "true") {
         countMove()
         // Update board
         tiles[tgt_ix].innerHTML = chLetter(tiles[ix].innerHTML, dir)
         tiles[ix].innerHTML = "_"
         tiles[tgt_ix].setAttribute("hole", false)
         tiles[ix].setAttribute("hole", true)
+        // Update draggable (holes aren't draggable)
+        tiles[tgt_ix].draggable = true
+        tiles[ix].draggable = false
         // Set the target as the active piece
         setActive(tiles[tgt_ix])
         // Highlight green right letters
@@ -150,4 +159,50 @@ document.addEventListener("keydown", e => { /* event listeners stack */
   if (e.key === "Escape" && (help.style.opacity == "1" || victory.style.opacity == "1")) {
     closeModals();
   }
-})
+});
+
+// Drag and drop
+const validDropDirection = (orig, tgt) => {
+    /* no need to check out of bounds since only possible for drag targets */
+    if (orig + 1 == tgt)
+        return "ArrowRight"
+    else if (orig - 1 == tgt)
+        return "ArrowLeft"
+    else if (orig + 5 == tgt)
+        return "ArrowDown"
+    else if (orig - 5 == tgt)
+        return "ArrowUp"
+    else
+        return null
+}
+[...document.querySelectorAll("#board-container .tile")].forEach(tile => {
+    if (tile.getAttribute("hole") != "true")
+        tile.draggable = true;
+    tile.addEventListener("dragstart", ev => {
+        ev.dataTransfer.setData("text/plain", ev.target.getAttribute("ix"))
+        ev.dataTransfer.effectsAllowed = "move"
+        setActive(ev.target)
+    });
+
+    tile.addEventListener("drop", ev => {
+        const origin_ix = Number(ev.dataTransfer.getData("text/plain"));
+        const target_ix = Number(ev.target.getAttribute("ix"));
+        const dir = validDropDirection(origin_ix, target_ix)
+        if (dir != null && ev.target.getAttribute("hole") == "true") {
+            ev.preventDefault();
+            print("Moving " + origin_ix + " in dir " + dir);
+            move(document.querySelector("#board-container .tile[ix=\""+origin_ix+"\"]"), dir)
+        }
+    });
+
+    tile.addEventListener("dragover", ev => {
+        const origin_ix = Number(ev.dataTransfer.getData("text/plain"));
+        const target_ix = Number(ev.target.getAttribute("ix"));
+        if (validDropDirection(origin_ix, target_ix) != null &&
+                ev.target.getAttribute("hole") == "true") {
+            ev.preventDefault();
+            ev.dataTransfer.dropEffect = "move"
+        }
+    });
+
+});
