@@ -203,7 +203,7 @@ document.addEventListener("keydown", e => { /* event listeners stack */
   }
 });
 
-// Drag and drop
+// Drag and drop / Touch events
 const validDropDirection = (orig, tgt) => {
     /* no need to check out of bounds since only possible for drag targets */
     if (orig + 1 == tgt)
@@ -242,20 +242,52 @@ const validDropDirection = (orig, tgt) => {
     });
 
     /* Touch Events */
+    var startX, startY
+
     tile.addEventListener("touchstart", ev => {
         setActive(ev.target)
+        const touch = ev.changedTouches[0]
+        startX = touch.pageX
+        startY = touch.pageY
     });
 
     tile.addEventListener("touchend", ev => {
         const origin_ix = Number(ev.target.getAttribute("ix"));
         const touchAtEnd = ev.changedTouches[0]
-        const targetEl = document.elementFromPoint(touchAtEnd.pageX, touchAtEnd.pageY)
-        const target_ix = Number(targetEl.getAttribute("ix"))
-        const dir = validDropDirection(origin_ix, target_ix)
-        if (dir != null && targetEl.getAttribute("hole") == "true") {
+        const vectorAngle = (x, y) =>
+          Math.acos(
+            x.reduce((acc, n, i) => acc + n * y[i], 0) /
+              (Math.hypot(...x) * Math.hypot(...y))
+          );
+
+        const swipeVec = [touchAtEnd.pageX - startX, touchAtEnd.pageY - startY]
+        const swipeAngle = vectorAngle(swipeVec, [1, 0])
+
+        const pi = Math.PI
+        const dir = 
+                swipeAngle < pi/4 ? "ArrowRight" :
+                swipeAngle > pi/4 && swipeAngle < 3*pi/4 ?
+                    (swipeVec[1] < 0 ? "ArrowUp" :
+                     swipeVec[1] > 0 ? "ArrowDown" :
+                     null) :
+                swipeAngle > 3*pi/4 ? "ArrowLeft" :
+                null
+        print(startX, startY, touchAtEnd.pageX, touchAtEnd.pageY)
+        print(swipeVec)
+        print(swipeAngle * (180 / Math.PI))
+        print(dir)
+
+        if (dir != null) {
             ev.preventDefault();
             move(document.querySelector("#board-container .tile[ix=\""+origin_ix+"\"]"), dir)
         }
+
+        /* We previously did this, but it was too precise (the touch end had to
+         * be precisely in the target square)
+         */
+        // const targetEl = document.elementFromPoint(touchAtEnd.pageX, touchAtEnd.pageY)
+        // const target_ix = Number(targetEl.getAttribute("ix"))
+        // const dir = validDropDirection(origin_ix, target_ix)
     });
 
 });
