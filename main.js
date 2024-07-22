@@ -96,7 +96,11 @@ const checkWin = () => {
 
     /* Populate win screen */
     const myMoves = getMoves()
-    document.getElementById("victory-count").innerHTML = myMoves
+    document.getElementById("victory-count").innerHTML = myMoves;
+    // document.getElementById("victory-stars").innerHTML =
+    //     myMoves > 35 ? "&#9733; &#9734; &#9734;" :
+    //     myMoves > 25 ? "&#9733; &#9733; &#9734;" :
+    //     /* otherwise*/ "&#9733; &#9733; &#9733;";
     // const highScore = getHighScore()
     // document.getElementById("highscore-count").innerHTML = highScore
     
@@ -124,7 +128,7 @@ const checkWin = () => {
             shareVictory.innerHTML = "Share"
         }, 2000)
     }
-    const sharePhrase = "Shuffdle " + now.getDate() + "/" + now.getMonth() + " " + solution + " in " + myMoves + "/50 moves"
+    const sharePhrase = "Shuffdle.com " + now.getDate() + "/" + (1+now.getMonth()) + " " + solution + " in " + myMoves + "/50 moves"
     const writeToClipboard = () => shareVictory.innerHTML = sharePhrase
 
     shareVictory.addEventListener("click", writeToClipboard)
