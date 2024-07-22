@@ -68,6 +68,19 @@ const chLetter = (l, dir) => {
         }[dir]
     return c(l)
 }
+const updateTimeToMidnight = () => {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24)
+    midnight.setMinutes(1)
+    midnight.setSeconds(0)
+    const diff = new Date(midnight - now)
+    document.getElementById("time-left-for-daily").innerHTML =
+        diff.getHours() + "h " + diff.getMinutes() + "m"
+}
+const maxMoves = Number(document.getElementById("maxMoves").innerHTML)
+const getMoves = () => Number(moves.innerHTML)
+const getHighScore = () => 14
 const checkWin = () => {
     for (let i = size*(size - 1); i<size*size; i++) {
         if (tiles[i].getAttribute("correct") != "true")
@@ -79,7 +92,38 @@ const checkWin = () => {
         void e.offsetWidth // Trigger reflow: necessary to restart animation if class was already set.
         e.classList.add("winanim")
     })
-    setTimeout(() => openModal(victory), 3500 /* delay to finish winanim animation */)
+    setTimeout(() => openModal(victory), 3500 /* delay until winanim animation finishes */)
+
+    /* Populate win screen */
+    const myMoves = getMoves()
+    const highScore = getHighScore()
+    document.getElementById("victory-count").innerHTML = myMoves
+    document.getElementById("highscore-count").innerHTML = highScore
+    
+    const now = new Date();
+    const secondsToNextMinute = 60 - now.getSeconds()
+    updateTimeToMidnight()
+    setTimeout(() => {
+        updateTimeToMidnight(),
+        setInterval(updateTimeToMidnight, 60*1000 /* repeat every minute */)},
+    secondsToNextMinute * 1000);
+
+    document.getElementById("custom-victory-msg").innerHTML =
+        myMoves > highScore ?
+            "It looks like you could still do it in fewer moves!" :
+        myMoves == highScore ?
+            "You've done as well as the best solution so far. Is it possible to do better?" :
+        /* otherwise */
+            "You've just set a <em>new highscore</em> for minimum number of moves!"
+
+    const shareVictory = document.getElementById("share-victory")
+    shareVictory.addEventListener("click", () => {
+        navigator.clipboard.writeText("shuffdle.com " + now.getDate() + "/" + now.getMonth() + " " + solution + " in " + myMoves + "/50 moves")
+        shareVictory.innerHTML = "<small style=\"color:var(--gray)\">Copied to clipboard</small>"
+        setTimeout(() => {
+            shareVictory.innerHTML = "Share"
+        }, 2000)
+    })
 }
 const flashMaxReached = () => {
     counter.classList.remove("gelatine")
@@ -90,8 +134,6 @@ const flashMaxReached = () => {
     void restartq.offsetWidth;
     restartq.style.opacity = 1;
 }
-const maxMoves = Number(document.getElementById("maxMoves").innerHTML)
-const getMoves = () => Number(moves.innerHTML)
 const countMove = () => {
     moves.innerHTML = getMoves() + 1
 }

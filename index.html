@@ -75,7 +75,7 @@
             </div>
             <small>Moving to the right increments the letter</small>
             <br></br>
-            <div class="example" style="">
+            <div class="example">
                 <div class="tile">F</div>
                 <div class="tile">T</div>
                 <div class="tile"><span class="ex-fade-in">A</span></div>
@@ -86,13 +86,22 @@
         </section>
         <section id="victory-modal" class="modal" style="opacity: 0">
             <div style="display: flex;">
-                <h2>Congratulations!</h2>
+                <h2 style="letter-spacing:1px">Congratulations!</h2>
                 <h2 style="margin-left: 5px; animation: gelatine 1.5s ease-out infinite;">&#127775;</h2>
                 <div style="flex-grow: 1"></div>
                 <h2 class="close-modal-btn">&#10006;</h2>
             </div>
-            <p></p>
-            <h4>The next daily Shuffdle puzzle will be available in 14h 53m</h4>
+            <p>You've completed today's puzzle in <span id="victory-count" style="color: var(--red)"></span> moves.</p>
+            <p>The leading player highscore is <span id="highscore-count" style="color: var(--green)"></span> moves.</p>
+            <p id="custom-victory-msg"></p>
+            <br>
+            <div style="display:flex; align-items:center">
+                <div style="flex-grow:1"></div>
+                <a id="share-victory">Share</a>
+                <div style="flex-grow:1"></div>
+            </div>
+            <br>
+            <h4 style="text-align: center">The next daily Shuffdle puzzle will be available in <span id="time-left-for-daily"></span></h4>
         </section>
         <script src="main.js"></script>
     </body>

@@ -166,7 +166,6 @@ main > aside {
 }
 
 #victory-modal.modal {
-    text-align: center;
     box-shadow:
         rgb(31, 193, 27) 0px 0px 0px 2px inset,
         rgb(255, 255, 255) 10px -10px 0px -3px,
@@ -198,6 +197,20 @@ main > aside {
     opacity: 0;
     transition: opacity 500ms ease-in;
     cursor: pointer;
+}
+
+#share-victory {
+    letter-spacing: 1px;
+    text-align: center;
+    border-bottom: 2px solid var(--red);
+    margin: 0 auto;
+    font-size: 1em;
+    color: var(--black);
+    text-decoration: none;
+    cursor: pointer;
+}
+#share-victory:hover {
+    border-bottom-style: dashed;
 }
 
 /* --------------------------------------------------------------------------------
