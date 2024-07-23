@@ -4,12 +4,12 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Shuffdle</title>
-        <meta name="description" content="Slide the shuffdle word into place">
+        <meta name="description" content="Slide the shuffdle word into place or: Caesar's 20-puzzle">
         <link rel="stylesheet" href="style.css" />
 
         <!-- open graph -->
         <meta property="og:title" content="Shuffdle" />
-        <meta property="og:description" content="Slide the shuffdle word into place" />
+        <meta property="og:description" content="Slide the shuffdle word into place or: Caesar's 20-puzzle" />
 
 
         <!-- favicon -->
@@ -53,7 +53,7 @@
         </main>
         <footer class="dimmable">
             <small>
-                Rodrigo Mesquita &copy; 2024
+                Shuffdle &copy; 2024 | <a style="color:var(--black)" href="mailto:rodrigo@shuffdle.com">Contact</a>
             </small>
         </footer>
         <div hidden id="wall"></div>
@@ -69,6 +69,7 @@
                 <li>Sliding <strong>down</strong> or <strong>right</strong> increases to the <em>next</em> letter</li>
                 <li>Sliding <strong>up</strong> or <strong>left</strong> decreases to the <em>previous</em> letter</li>
             </ul>
+            <small style="font-weight: normal"><strong>Tip</strong>: Incrementing a <strong>Z</strong> gives you an <strong>A</strong>, and vice versa.</small>
             <h4>Examples</h4>
             <div class="example">
                 <div class="tile">F</div>
