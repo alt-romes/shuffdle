@@ -4,12 +4,12 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Shuffdle</title>
-        <meta name="description" content="Slide the shuffdle word into place or: Caesar's 20-puzzle">
+        <meta name="description" content="Slide the daily shuffdle word into the bottom row or: Caesar's 20-puzzle">
         <link rel="stylesheet" href="style.css" />
 
         <!-- open graph -->
         <meta property="og:title" content="Shuffdle" />
-        <meta property="og:description" content="Slide the shuffdle word into place or: Caesar's 20-puzzle" />
+        <meta property="og:description" content="Slide the daily shuffdle word into the bottom row or: Caesar's 20-puzzle" />
 
 
         <!-- favicon -->
@@ -34,8 +34,8 @@
                 <a onclick="location.reload(); return false;" style="color:var(--gray); text-decoration: underline; text-decoration-style: dotted">restart?</a>
             </div>
             <script>
-                const the_board_id = ['A','O','U','T','O','S','B','X','Q','E','O','S','X','F','B','M','B','G','M','P','_','_','_','_','_']
-                const the_word_goal = "FRAUD"
+                const the_board_id = ['B','P','F','O','B','L','R','X','B','O','R','T','M','I','N','N','N','F','A','C','_','_','_','_','_']
+                const the_word_goal = "TOWEL"
                 document.getElementById("solution").innerHTML = the_word_goal
                 const container = document.getElementById("board-container")
                 for (x of the_board_id) {
