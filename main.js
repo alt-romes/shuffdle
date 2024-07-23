@@ -5,6 +5,7 @@ const counter  = document.getElementById("counter")
 const restartq = document.getElementById("restart-qm")
 const size     = 5
 const tiles    = document.getElementsByClassName("tile")
+const helpBtn  = document.getElementById("help")
 const help     = document.getElementById("help-modal")
 const victory  = document.getElementById("victory-modal")
 const overlay  = document.getElementById("wall")
@@ -193,8 +194,14 @@ for (let i=0; i<tiles.length; i++) {
 }
 document.addEventListener("keydown", keydown)
 
+// Animate "Tutorial" button if visiting for the first time
+if (!localStorage.getItem("shuffdle-visited")) {
+    helpBtn.classList.add("hithere")
+    localStorage.setItem("shuffdle-visited", "yes")
+}
+
 // Modal
-document.getElementById("help").addEventListener("click", () => openModal(help));
+helpBtn.addEventListener("click", () => openModal(help));
 wall.addEventListener("click", e => closeModals());
 [...document.getElementsByClassName("close-modal-btn")].map(e => e.addEventListener("click", () => closeModals()));
 document.addEventListener("keydown", e => { /* event listeners stack */
