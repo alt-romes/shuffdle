@@ -94,8 +94,14 @@ const checkWin = () => {
         if (tiles[i].getAttribute("correct") != "true")
             return
     }
+
     // Win!
     showWin()
+
+    // Report win
+    const now = new Date();
+    const datePath = now.getDate() + "-" + (now.getMonth()+1) + "-" + now.getFullYear()
+    plausible('pageview', { u: "https://www.shuffdle.com/win/" + solution + "/" + datePath + "/" + getMoves() + "-moves" })
 }
 const showWin = () => {
     [...document.getElementsByClassName("last-row-tile")].map(e => {
