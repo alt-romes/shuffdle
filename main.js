@@ -17,9 +17,16 @@ const dim = () => [...document.getElementsByClassName("dimmable")].map(e => e.st
 const undim = () => [...document.getElementsByClassName("dimmable")].map(e => e.style.opacity = 1)
 const openModal = (m) => {
     dim()
-    m.style.opacity = 1;
     m.style.pointerEvents = "inherit"
     wall.hidden = false;
+
+    if (m.id == "victory-modal")
+        /* Sometime right before the victory-modal animation finishes, but
+         * after the animation has set the opacity to 1 (1300/2), set more
+         * permanently the opacity to 1. */
+        setTimeout(() => m.style.opacity = 1, 1000)
+    else
+        m.style.opacity = 1;
 }
 const closeModal = (m) => {
     undim()

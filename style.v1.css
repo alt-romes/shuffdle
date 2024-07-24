@@ -141,6 +141,7 @@ main > aside {
     padding: 1rem 2rem;
     border-radius: 1px;
 
+    opacity: 1;
     transition: opacity 300ms ease-in;
     z-index: 2;
     pointer-events: none; /* <-- Overwritten by JS */
@@ -345,7 +346,7 @@ main > aside {
 }
 
 .bounce-in {
-  animation: bounce-in 1s ease 5ms;
+  animation: bounce-in 1s ease 305ms;
 }
 @keyframes bounce-in {
   0% {
@@ -366,9 +367,8 @@ main > aside {
   }
 }
 
-
 .win-modal-anim {
-    animation: bounce-in 1s ease 5ms;
+    animation: bounce-in 1s ease 300ms;
 }
 
 /* --------------------------------------------------------------------------------
