@@ -134,13 +134,12 @@ main > aside {
     text-align: left;
     background-color: var(--background);
 
-    box-shadow:
-        blue 0px 0px 0px 2px inset,
-        rgb(255, 255, 255) 10px -10px 0px -3px,
-        rgb(31, 193, 27) 10px -10px,
-        rgb(255, 255, 255) 20px -20px 0px -3px;
-        /* rgb(255, 217, 19) 20px -20px, */
-        /* rgb(255, 255, 255) 30px -30px 0px -3px; */
+    /* box-shadow: */
+    /*     blue 0px 0px 0px 2px inset, */
+    /*     rgb(255, 255, 255) 10px -10px 0px -3px, */
+    /*     rgb(31, 193, 27) 10px -10px, */
+    /*     rgb(255, 255, 255) 20px -20px 0px -3px; */
+    box-shadow: rgba(255, 255, 255, 0.2) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.9) 0px 0px 0px 1px;
 
     padding: 1rem 2rem;
     border-radius: 1px;
@@ -156,8 +155,8 @@ main > aside {
     font-size: 1.1em;
 
     position: absolute;
-    top: 17.5%;
-    bottom: 17.5%;
+    top: 4em;
+    bottom: 4em;
     left: 25%;
     right: 25%;
 }
@@ -168,9 +167,31 @@ main > aside {
 
 #victory-modal.modal {
     box-shadow:
-        rgb(31, 193, 27) 0px 0px 0px 2px inset,
-        rgb(255, 255, 255) 10px -10px 0px -3px,
-        blue 10px -10px;
+        rgba(255, 255, 255, 0.2) 0px 0px 0px 1px inset,
+        rgba(0, 0, 0, 0.9) 0px 0px 0px 1px,
+        rgb(255, 255, 255) 0px 0px 0px 4px,
+        rgb(31, 193, 27) 0px 0px 0px 5px,
+        rgb(255, 255, 255) 0px 0px 0px 8px,
+        rgb(255, 217, 19) 0px 0px 0px 9px;
+
+    /* box-shadow: rgb(85, 91, 255) 0px 0px 0px 3px, */
+    /* rgb(31, 193, 27) 0px 0px 0px 6px, , rgb(255, 156, 85) 0px 0px 0px 12px, rgb(255, 85, 85) 0px 0px 0px 15px; */
+
+    aspect-ratio: 1 / 1;
+    border-radius: 100%;
+    overflow: hidden;
+    margin: auto;
+
+    width: 30%;
+
+    padding: 2em;
+
+    text-align: center;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .dimmable {
@@ -318,6 +339,33 @@ main > aside {
   100% { transform: scale(1); }
 }
 
+.bounce-in {
+  animation: bounce-in 1s ease 5ms;
+}
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(.9);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+
+.win-modal-anim {
+    animation: bounce-in 1s ease 5ms;
+}
+
 /* --------------------------------------------------------------------------------
    Responsiveness
  */
@@ -325,19 +373,27 @@ main > aside {
 /* Larger modals */
 @media only screen and (max-width: 1024px) {
   .modal {
-    top: 17.5%;
-    bottom: 17.5%;
+    top: 3em;
+    bottom: 3em;
     left: 17.5%;
     right: 17.5%;
+  }
+
+  #victory-modal.modal {
+    width: 45%;
   }
 }
 
 @media only screen and (max-width: 640px) {
   .modal {
-    top: 5%;
-    bottom: 5%;
+    top: 3em;
+    bottom: 3em;
     left: 5%;
     right: 5%;
+  }
+
+  #victory-modal.modal {
+    width: 85%;
   }
 }
 
@@ -358,3 +414,10 @@ main > aside {
   }
 }
 
+/* On bigger screens, reduce size of victory modal */
+@media only screen and (min-width: 1444px) {
+    #victory-modal.modal {
+        width: 20%;
+    }
+}
+ 
