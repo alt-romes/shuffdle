@@ -134,12 +134,9 @@ main > aside {
     text-align: left;
     background-color: var(--background);
 
-    /* box-shadow: */
-    /*     blue 0px 0px 0px 2px inset, */
-    /*     rgb(255, 255, 255) 10px -10px 0px -3px, */
-    /*     rgb(31, 193, 27) 10px -10px, */
-    /*     rgb(255, 255, 255) 20px -20px 0px -3px; */
-    box-shadow: rgba(255, 255, 255, 0.2) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.9) 0px 0px 0px 1px;
+    box-shadow:
+        rgba(255, 255, 255, 0.2) 0px 0px 0px 1px inset,
+        rgba(0, 0, 0, 0.9) 0px 0px 0px 1px;
 
     padding: 1rem 2rem;
     border-radius: 1px;
@@ -163,6 +160,14 @@ main > aside {
 
 .close-modal-btn {
     cursor: pointer;
+}
+
+#help-modal.modal {
+    box-shadow:
+        rgba(255, 255, 255, 0.2) 0px 0px 0px 1px inset,
+        rgba(0, 0, 0, 0.9) 0px 0px 0px 1px,
+        rgb(255, 255, 255) 0px 0px 0px 4px,
+        blue 0px 0px 0px 5px;
 }
 
 #victory-modal.modal {
