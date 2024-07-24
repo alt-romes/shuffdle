@@ -134,18 +134,6 @@ const showWin = () => {
     //     /* otherwise */
     //         "You've just set a <em>new highscore</em> for minimum number of moves!"
 
-    // const shareVictory = document.getElementById("share-victory")
-
-    // const updateShareText = () => {
-    //     shareVictory.innerHTML = "<small style=\"color:var(--gray)\">Copied to clipboard</small>"
-    //     setTimeout(() => {
-    //         shareVictory.innerHTML = "Share"
-    //     }, 2000)
-    // }
-    // const sharePhrase = "Shuffdle.com " + now.getDate() + "/" + (1+now.getMonth()) + " " + solution + " in " + myMoves + "/50 moves"
-    // const writeToClipboard = () => shareVictory.innerHTML = sharePhrase
-
-    // shareVictory.addEventListener("click", writeToClipboard)
 }
 const flashMaxReached = () => {
     counter.classList.remove("gelatine")
