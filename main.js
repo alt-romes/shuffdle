@@ -80,7 +80,7 @@ const updateTimeToMidnight = () => {
     const now = new Date();
     const midnight = new Date(now);
     midnight.setHours(23)
-    midnight.setMinutes(1)
+    midnight.setMinutes(0)
     midnight.setSeconds(0)
     const diff = new Date(midnight - now)
     document.getElementById("time-left-for-daily").innerHTML =
