@@ -9,7 +9,7 @@ const helpBtn  = document.getElementById("help")
 const help     = document.getElementById("help-modal")
 const victory  = document.getElementById("victory-modal")
 const overlay  = document.getElementById("wall")
-const hardcoreMode = window.location.pathname.includes("hardest") || window.location.hash.includes("hardest")
+const hardcoreMode = window.location.pathname.includes("hard") || window.location.hash.includes("hard")
 const defaultCorrectness = hardcoreMode ? "possibly-correct" : "correct" /* easy mode there's only one correct location */
 
 // --------------------------------------------------------------------------------
