@@ -191,6 +191,8 @@ const showWin = () => {
     /* Populate win screen */
     const myMoves = getMoves()
     document.getElementById("victory-count").innerHTML = myMoves;
+    if (hardcoreMode)
+        document.getElementById("victory-line").innerHTML = "You've completed today's <strong>hardest</strong> puzzle in";
     
     const now = new Date();
     const secondsToNextMinute = 60 - now.getSeconds()
