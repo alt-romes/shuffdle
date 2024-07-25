@@ -35,8 +35,10 @@
                 <div style="flex-grow:1"></div>
                 <div id="counter"><span id="moves">0</span>/<span id="maxMoves">50</span> moves</div>
             </aside>
-            <div id="restart-qm" hidden>
-                <a onclick="location.reload(); return false;" style="color:var(--gray); text-decoration: underline; text-decoration-style: dotted">restart?</a>
+            <div class="smaller-options">
+                <div style="flex-grow:1"></div>
+                <a id="hint" onclick="showABC()" class="small-option">hint?</a>
+                <a hidden id="restart-qm" onclick="location.reload(); return false;" class="small-option">restart?</a>
             </div>
             <script>
                 const the_board_id = ['S','K','W','H','U','T','S','O','R','C','W','J','E','J','Y','X','D','A','H','Y','_','_','_','_','_']

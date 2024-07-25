@@ -226,11 +226,28 @@ main > aside {
     box-sizing: border-box;
 }
 
+.smaller-options {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: -1em;
+    gap: 1em;
+}
+
+.small-option {
+    color: var(--gray);
+    text-decoration: underline;
+    text-decoration-style: dotted;
+}
+
 #restart-qm {
     text-align: right;
-    margin-top: -1em;
     opacity: 0;
     transition: opacity 500ms ease-in;
+    cursor: pointer;
+}
+
+#hint {
     cursor: pointer;
 }
 

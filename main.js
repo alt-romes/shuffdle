@@ -207,6 +207,8 @@ const flashMaxReached = () => {
     restartq.hidden = false;
     void restartq.offsetWidth;
     restartq.style.opacity = 1;
+
+    document.getElementById("hint").innerHTML=""
 }
 const countMove = () => {
     moves.innerHTML = getMoves() + 1
@@ -404,3 +406,12 @@ const validDropDirection = (orig, tgt) => {
     });
 
 });
+
+/* Show a Hint */
+const showABC = () => {
+    const h = document.getElementById("hint")
+    h.classList.remove("small-option")
+    h.style.cursor = "default";
+    h.innerHTML = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    h.onclick = "";
+}
