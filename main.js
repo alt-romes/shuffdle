@@ -109,7 +109,7 @@ const checkWin = () => {
     plausible('pageview', { u: "https://www.shuffdle.com/win/" + solution + "/" + datePath + "/" + getMoves() + "-moves" })
 }
 const showWin = () => {
-    [...document.getElementsByClassName("last-row-tile")].map(e => {
+    [...document.querySelectorAll("main .tile[correct=\"true\"]")].map(e => {
         playAnim(e, "winanim") // (Yes, we want to restart the animation if someone moves after the solution.)
     })
     setTimeout(() => {
