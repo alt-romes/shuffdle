@@ -89,6 +89,11 @@ const updateTimeToMidnight = () => {
 const maxMoves = Number(document.getElementById("maxMoves").innerHTML)
 const getMoves = () => Number(moves.innerHTML)
 const getHighScore = () => 14
+const playAnim = (e, a) => {
+    e.classList.remove(a)
+    void e.offsetWidth // Trigger reflow
+    e.classList.add(a)
+}
 const checkWin = () => {
     for (let i = size*(size - 1); i<size*size; i++) {
         if (tiles[i].getAttribute("correct") != "true")
@@ -105,18 +110,14 @@ const checkWin = () => {
 }
 const showWin = () => {
     [...document.getElementsByClassName("last-row-tile")].map(e => {
-        e.classList.remove("winanim") // We want to restart the animation if someone moves after the solution.
-        void e.offsetWidth // Trigger reflow: necessary to restart animation if class was already set.
-        e.classList.add("winanim")
+        playAnim(e, "winanim") // (Yes, we want to restart the animation if someone moves after the solution.)
     })
     setTimeout(() => {
 
         openModal(victory)
 
-        // Flip anim
-        victory.classList.remove("win-modal-anim")
-        void victory.offsetWidth // Trigger reflow
-        victory.classList.add("win-modal-anim")
+        // Bounce in win anim
+        playAnim(victory, "win-modal-anim")
 
     }, 3500 /* delay until winanim animation finishes */)
 
@@ -149,9 +150,7 @@ const showWin = () => {
 
 }
 const flashMaxReached = () => {
-    counter.classList.remove("gelatine")
-    void counter.offsetWidth // Trigger reflow
-    counter.classList.add("gelatine")
+    playAnim(counter, "gelatine")
 
     restartq.hidden = false;
     void restartq.offsetWidth;
