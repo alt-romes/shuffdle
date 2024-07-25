@@ -83,6 +83,7 @@ body > footer {
 }
 
 .tile[correct=true] {
+    transition: border 200ms ease-in-out;
     border: solid var(--green) 2px;
 }
 
