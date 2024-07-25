@@ -5,6 +5,7 @@
     --red: red;
     --info: lightblue;
     --background: white;
+    --possibly-correct: orange;
 }
 
 *, *::before, *::after {
@@ -82,8 +83,13 @@ body > footer {
     border: solid var(--black) 2px;
 }
 
+.tile[possibly-correct=true] {
+    transition: border 250ms ease-in;
+    border: solid var(--possibly-correct) 2px;
+}
+
 .tile[correct=true] {
-    transition: border 200ms ease-in-out;
+    transition: border 250ms ease-in;
     border: solid var(--green) 2px;
 }
 

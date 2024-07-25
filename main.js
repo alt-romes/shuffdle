@@ -9,6 +9,8 @@ const helpBtn  = document.getElementById("help")
 const help     = document.getElementById("help-modal")
 const victory  = document.getElementById("victory-modal")
 const overlay  = document.getElementById("wall")
+const hardcoreMode = window.location.pathname.includes("hardest") || window.location.hash.includes("hardest")
+const defaultCorrectness = hardcoreMode ? "possibly-correct" : "correct" /* easy mode there's only one correct location */
 
 // --------------------------------------------------------------------------------
 // Modals
@@ -95,10 +97,74 @@ const playAnim = (e, a) => {
     e.classList.add(a)
 }
 const checkWin = () => {
-    for (let i = size*(size - 1); i<size*size; i++) {
-        if (tiles[i].getAttribute("correct") != "true")
-            return
+    /* This function doesn't need to handle the easy case because it will check only all tiles that have the defaultCorrectness
+     * In hardest mode, the correctness will be "possibly-correct", and we'll traverse all of those.
+     *      "possibly-correct" gets set only on hardest mode.
+     * In easy mode, the correctness will be "correct". "correct" will be set
+     * only for tiles on the last row when in easy mode.
+     *
+     * Basically, this will sweep from all tiles we've marked: as long as we
+     * mark them appropriately for each difficulty, this is fine.
+     *
+     * NB: I suppose this would allow the word to be accepted backwards in the
+     * last row! That's fine, we've actually never said it couldn't be
+     * backwards, just that it had to be in the last row.
+     */
+    const solutions =
+            [...document.querySelectorAll("#board-container .tile["+defaultCorrectness+"=\"true\"]")].map(c => {
+                const ix = Number(c.getAttribute("ix"))
+                const col_ix = ix % size
+                const row_ix = ix / size >> 0 // integer division
+                let hasWon = false;
+                // From the start of the column to the end, all must be correct.
+                if (col_ix == 0) {
+                    for (let i = 0; i<5; i++)
+                        if (tiles[row_ix*5 + i].innerHTML != solution[i])
+                            return false
+                    for (let i = 0; i<5; i++)
+                        tiles[row_ix*5 + i].setAttribute("correct", true)
+                    hasWon = true;
+                }
+                // From the start of the row to the end, all must be correct.
+                if (row_ix == 0) {
+                    for (let i = 0; i<5; i++)
+                        if (tiles[i*5 + col_ix].innerHTML != solution[i])
+                            return false
+                    for (let i = 0; i<5; i++)
+                        tiles[i*5 + col_ix].setAttribute("correct", true)
+                    hasWon = true;
+                }
+                // From the end of the row to the start, all must be correct.
+                if (row_ix == 5) {
+                    for (let i = 0; i<5; i++)
+                        if (tiles[i*5 + col_ix].innerHTML != solution[4-i])
+                            return false
+                    for (let i = 0; i<5; i++)
+                        tiles[i*5 + col_ix].setAttribute("correct", true)
+                    hasWon = true;
+                }
+                // From the end of the column to the start, all must be correct.
+                if (col_ix == 5) {
+                    for (let i = 0; i<5; i++)
+                        if (tiles[row_ix*5 + i].innerHTML != solution[4 - i])
+                            return false
+                    for (let i = 0; i<5; i++)
+                        tiles[row_ix*5 + i].setAttribute("correct", true)
+                    hasWon = true;
+                }
+                // Only return at the end because if somehow both a column and
+                // row are correct, they should all be marked as correct.
+
+                return hasWon;
+            })
+
+    if (!solutions.some(x => x)) {
+        // No correct solution
+        return;
     }
+
+    // The function above will also mark as "correct" the possibly-correct
+    // tiles that were actually correct for a solution.
 
     // Win!
     showWin()
@@ -125,12 +191,6 @@ const showWin = () => {
     /* Populate win screen */
     const myMoves = getMoves()
     document.getElementById("victory-count").innerHTML = myMoves;
-    // document.getElementById("victory-stars").innerHTML =
-    //     myMoves > 35 ? "&#9733; &#9734; &#9734;" :
-    //     myMoves > 25 ? "&#9733; &#9733; &#9734;" :
-    //     /* otherwise*/ "&#9733; &#9733; &#9733;";
-    // const highScore = getHighScore()
-    // document.getElementById("highscore-count").innerHTML = highScore
     
     const now = new Date();
     const secondsToNextMinute = 60 - now.getSeconds()
@@ -139,14 +199,6 @@ const showWin = () => {
         updateTimeToMidnight(),
         setInterval(updateTimeToMidnight, 60*1000 /* repeat every minute */)},
     secondsToNextMinute * 1000);
-
-    // document.getElementById("custom-victory-msg").innerHTML =
-    //     myMoves > highScore ?
-    //         "It looks like you could still do it in fewer moves!" :
-    //     myMoves == highScore ?
-    //         "You've done as well as the best solution so far. Is it possible to do better?" :
-    //     /* otherwise */
-    //         "You've just set a <em>new highscore</em> for minimum number of moves!"
 
 }
 const flashMaxReached = () => {
@@ -159,12 +211,37 @@ const flashMaxReached = () => {
 const countMove = () => {
     moves.innerHTML = getMoves() + 1
 }
-const move = (el, dir) => {
+const isTileCorrect = t => {
+    const ix = Number(t.getAttribute("ix"))
+    const col_ix = ix % size
+    const row_ix = ix / size >> 0 // integer division
+    const tval = t.innerHTML
+
+    /*
+     * Note: Here we must be careful:
+     * If on easy mode, we can only allow solutions in the last row.
+     * Otherwise we can mark all possibly correct letters
+     */
+    if (hardcoreMode)
+        return tval == solution[col_ix] || tval == solution[row_ix]
+                || tval == solution[4 - col_ix] || tval == solution[4 - row_ix]
+    else
+        return row_ix == 4 && tval == solution[col_ix]
+}
+const markAllPCs = () => {
+    // Called at start to mark existing possibly correct letters
+    [...tiles].forEach(t => {
+        if (isTileCorrect(t)) {
+            t.setAttribute(defaultCorrectness, true)
+        }
+    })
+}
+const move = (orig, dir) => {
     if (getMoves() >= maxMoves) {
         flashMaxReached();
         return;
     }
-    const ix = Number(el.getAttribute("ix"))
+    const ix = Number(orig.getAttribute("ix"))
     const col_ix = ix % size
     const tgt_ix =
       { "ArrowUp"   : ix - size >= 0 ? ix - size : null,
@@ -179,24 +256,37 @@ const move = (el, dir) => {
         "ArrowLeft" : col_ix - 1 >= 0 ? ix - 1 : null,
         "a"         : col_ix - 1 >= 0 ? ix - 1 : null,
       }[dir]
-    if (tgt_ix != null && tiles[tgt_ix].getAttribute("hole") == "true" &&
-            tiles[ix].getAttribute("hole") != "true") {
+
+    if (tgt_ix == null) return;
+
+    const tgt = tiles[tgt_ix]
+
+    if (tgt.getAttribute("hole") == "true" && orig.getAttribute("hole") != "true") {
         countMove()
         // Update board
-        tiles[tgt_ix].innerHTML = chLetter(tiles[ix].innerHTML, dir)
-        tiles[ix].innerHTML = "_"
-        tiles[tgt_ix].setAttribute("hole", false)
-        tiles[ix].setAttribute("hole", true)
+        tgt.innerHTML = chLetter(orig.innerHTML, dir)
+        orig.innerHTML = "_"
+        tgt.setAttribute("hole", false)
+        orig.setAttribute("hole", true)
         // Set the target as the active piece
-        setActive(tiles[tgt_ix])
-        // Highlight green right letters
-        const tgt_col_ix = tgt_ix % size
-        if (tiles[tgt_ix].innerHTML == solution[tgt_col_ix] && tgt_ix >= size*(size-1)) {
-            tiles[tgt_ix].setAttribute("correct", true)
+        setActive(tgt)
+
+        // Clear existing highlight
+        orig.setAttribute("correct", false)
+        if (hardcoreMode) {
+            orig.setAttribute("possibly-correct", false);
+            // On hardcore mode, moving a single piece makes the remaining no longer correct but only possibly-correct.
+            [...document.querySelectorAll("#board-container .tile[correct=true]")].forEach(at => {
+                at.setAttribute("correct", false)
+                at.setAttribute("possibly-correct", true)
+            })
+        }
+
+        if (isTileCorrect(tgt)) {
+            // Highlight correct/possibly-correct right letters
+            tgt.setAttribute(defaultCorrectness, true)
             checkWin()
         }
-        // Clear existing highlight
-        tiles[ix].setAttribute("correct", false)
     }
 }
 
@@ -206,6 +296,9 @@ for (let i=0; i<tiles.length; i++) {
     t.addEventListener("click", e => setActive(e.target))
 }
 document.addEventListener("keydown", keydown)
+
+// Mark all already possibly correct tiles
+markAllPCs()
 
 // Animate "Tutorial" button if visiting for the first time
 if (!localStorage.getItem("shuffdle-visited")) {
