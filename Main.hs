@@ -67,7 +67,8 @@ generateBoard easy word gen = do
           -- Row vs Column
           pickRow <- uniformM gen
           -- Straight vs Reverse
-          pickStraight <- uniformM gen
+          -- Nevermind! Don't allow reversed words, it becomes too masochistic for a game.
+          pickStraight <- {- uniformM gen -} pure True
           -- Pick Row or Col Ix
           line_ix <- uniformRM (0, size-1) gen
           return (pickRow, pickStraight, line_ix)
