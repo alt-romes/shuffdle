@@ -44,38 +44,74 @@ move ix dir Board{size, tiles} = do
         guard (col_ix - 1 >= 0)
         return (ix - 1)
 
-generateBoard :: String {- N letter word -} -> StdGen -> (Board, Int)
-generateBoard word g = (Board{size, tiles}, nMoves) where
-  size = length word
-  nTilesFFR {- number of tiles in the first four rows -}
-    = size*(size-1)
-  nTiles {- total number of tiles -}
-    = size*size
+untilM :: Monad m => (a -> Bool) -> m a -> m a
+untilM p a = do
+  x <- a
+  if p x then return x else untilM p a
 
-  (g', holesIxs) = List.mapAccumL (\acc _i -> swap $ uniformR (0, nTilesFFR - 1) acc) g [0..size-1]
-  holes = IM.fromList $ map (,Empty) holesIxs
-  (g'', IM.fromList -> fullLetters) = List.mapAccumL (\acc i -> swap $ first ((i,) . With) $ uniformR ('A', 'Z') acc) g' [0..nTilesFFR-1]
-  lastRow = IM.fromList $ zip [nTilesFFR..size*size-1] (map With word)
+type SolutionPick = (Bool, Bool, Int) -- pickRow, pickStraight, line_ix
 
-  solutionBoard = holes `IM.union` lastRow `IM.union` fullLetters {- union is left biased, and no holes in the last row -}
+generateBoard :: StatefulGen g m => Bool {- easy mode -} -> String {- N letter word -} -> g -> m (Board, Int, SolutionPick)
+generateBoard easy word gen = do
+  let
+    size = length word
+    nTiles {- total number of tiles -}
+      = size*size
 
-  (initialBoard, nMoves) = loop Board{size, tiles=solutionBoard} 0 g'' where
-    loop b nm rg
-      | lastRowIsEmpty b
-      = (b.tiles, nm)
+  (solutionIxs, pick) <- do
+    pick@(pickRow, pickStraight, line_ix)
+      <-
+        if easy then
+           return (True, True, size-1)
+        else do
+          -- Row vs Column
+          pickRow <- uniformM gen
+          -- Straight vs Reverse
+          pickStraight <- uniformM gen
+          -- Pick Row or Col Ix
+          line_ix <- uniformRM (0, size-1) gen
+          return (pickRow, pickStraight, line_ix)
+    (,pick) <$>
+      case (pickRow, pickStraight) of
+        (True, True) ->
+          return $ take size [line_ix*size..]
+        (True, False) ->
+          return $ take size [size-1+line_ix*size,size-1+line_ix*size-1..]
+        (False, True) ->
+          return $ take size [line_ix,line_ix+size..]
+        (False, False) ->
+          return $ take size [line_ix+size*(size-1),line_ix-size..]
+
+  holesIxs <- replicateM size (untilM (not . (`List.elem` solutionIxs)) (uniformRM (0, nTiles - 1) gen))
+
+  fullLetters <- IM.fromList <$> mapM (\i -> ((i,) . With) <$> uniformRM ('A', 'Z') gen) [0..nTiles-1]
+
+  let
+    solutionRow = IM.fromList $ zip solutionIxs (map With word)
+    holes = IM.fromList $ map (,Empty) holesIxs
+
+    solutionBoard = solutionRow `IM.union` holes `IM.union` fullLetters {- union is left biased -}
+
+    loop make_row_empty b nm extra_moves_count
+      -- On hard mode, first make the solution row empty, then do N extra moves
+      -- to mix it up.
+      -- On easy mode, stop when the row is empty.
+      | make_row_empty && rowIsEmpty solutionIxs b
+      = if easy then do
+          pure (b.tiles, nm)
+        else do
+          loop False b nm 50000 {- start extra move count -}
+      | not make_row_empty && extra_moves_count <= 0
+      = pure (b.tiles, nm)
       | otherwise
-      = let (ix,rg') = uniformR (0,size*size-1) rg
-            (mov,rg'') = uniformR (minBound @Direction, maxBound @Direction) rg'
-         in
-         -- in if ix >= size*(size-2) && ix < size*(size-1) {- is in fourth row -}
-         --       && mov == D then loop b nm rg'' {- don't try to push a piece in the fourth row down -}
-         --    else
-              let (b',nm') = maybe (b,nm) (,nm+1) $ move ix mov b
-               in loop b' nm' rg''
+      = do ix <- uniformRM (0,size*size-1) gen
+           mov <- uniformRM (minBound @Direction, maxBound @Direction) gen
+           let (b',nm') = maybe (b,nm) (,nm+1) $ move ix mov b
+           loop make_row_empty b' nm' (extra_moves_count - 1)
 
-  tiles = initialBoard
+  (initialBoard, nMoves) <- loop True Board{size, tiles=solutionBoard} 0 0
 
--- idea: use a genetic algorithm to figure out a "better" solution to the puzzle.
+  return (Board{size, tiles=initialBoard}, nMoves, pick)
 
 sampleBoard = [
   [With 'F', With 'U', With 'U', With 'M', With 'F'],
@@ -94,21 +130,27 @@ main = do
     let tryGenBoard = do
           genTid <- forkIO $ do
             -- Must be forced otherwise the time will be spent after taking from the MVar!
-            (!b,!m) <- generateBoard word <$> initStdGen
+            ((!b,!m, !p), g') <- flip runStateGen (generateBoard True word) <$> initStdGen
+            (!hard_b,!hard_m, !hard_p) <- flip runStateGen_ (generateBoard False word) <$> pure g'
             modifyMVar isDone (\_ -> pure (True, ()))
-            putMVar boardSyn (b,m)
+            putMVar boardSyn ((b,m,p), (hard_b,hard_m,hard_p))
           void $ forkIO $ do
             -- After half a minute kill the generation
-            threadDelay (30*1000*1000)
+            threadDelay (40*1000*1000)
             done <- readMVar isDone
             when (not done) $ do
               putStrLn "Retrying..."
               killThread genTid
               tryGenBoard
     tryGenBoard
-    (board, nMoves) <- takeMVar boardSyn
+    ((board, nMoves, pick), (hard_board, hard_nMoves, hard_pick)) <- takeMVar boardSyn
     putStrLn $ "board-id:" ++ boardId board
     putStrLn $ "Constructing the solution took " ++ show nMoves ++ " moves"
+    putStrLn $ "Solution pos " ++ show pick
+
+    putStrLn $ "hard-board-id:" ++ boardId hard_board
+    putStrLn $ "Constructing the hard board took " ++ show hard_nMoves ++ " moves"
+    putStrLn $ "Hard solution pos " ++ show hard_pick
     --
     -- loop board
     -- loop (boardFromRows sampleBoard)
@@ -155,9 +197,9 @@ displayBoard = List.intercalate "\n" . map (unwords . map show) . boardToRows
 boardId :: Board -> String
 boardId Board{tiles} = show $ map snd $ IM.toList tiles
 
-lastRowIsEmpty :: Board -> Bool
-lastRowIsEmpty Board{size, tiles} =
-  all (==Empty) $ map (tiles IM.!) [size*(size-1)..size*size-1]
+rowIsEmpty :: [Int] -> Board -> Bool
+rowIsEmpty ixs Board{size, tiles} =
+  all (==Empty) $ map (tiles IM.!) ixs
 
 --------------------------------------------------------------------------------
 -- * Utils
