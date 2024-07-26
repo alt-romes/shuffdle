@@ -25,9 +25,12 @@
         <!-- trigger basic pageview; later on, we'll trigger a win-screen manually -->
         <script>plausible('pageview')</script>
 
+        <script>
+            const hardcoreMode = window.location.pathname.includes("hard") || window.location.hash.includes("hard") || window.location.search.includes("hard")
+        </script>
     </head>
     <body>
-        <h1 class="dimmable">The <span id="shuffled">Shuffdle</span> word is <span id="solution"></span></h1>
+        <h1 id="header-line" class="dimmable">The <span id="shuffled">Shuffdle</span> word is <span id="solution"></span></h1>
         <main class="dimmable">
             <div class="container" id="board-container"></div>
             <aside>
@@ -46,7 +49,7 @@
                 const the_word_goal = "HOBBY"
                 document.getElementById("solution").innerHTML = the_word_goal
                 const container = document.getElementById("board-container")
-                for (x of the_board_id) {
+                for (x of (hardcoreMode ? the_hard_board_id : the_board_id)) {
                     const div = document.createElement("div")
                     div.classList.add("tile")
                     div.innerHTML = x
@@ -60,7 +63,7 @@
         </main>
         <footer class="dimmable">
             <small>
-                Shuffdle &copy; 2024 | <a style="color:var(--black)" href="mailto:rodrigo@shuffdle.com">Contact</a>
+                Shuffdle &copy; 2024 | <a id="hardmode-toggle" style="color:var(--black)" href="/?hard">Hard Mode</a> | <a style="color:var(--black)" href="mailto:rodrigo@shuffdle.com">Contact</a>
             </small>
         </footer>
         <div hidden id="wall"></div>
@@ -70,7 +73,7 @@
                 <div style="flex-grow: 1"></div>
                 <h2 class="close-modal-btn">&#10006;</h2>
             </div>
-            <p>Reconstruct the daily Shuffdle word in the <em>bottom row</em> with a minimal number of moves</p>
+            <p id="lead-tutorial"></p>
             <ul>
                 <li>Letters can only slide to empty spaces</li>
                 <li>Sliding <strong>down</strong> or <strong>right</strong> increases to the <em>next</em> letter</li>

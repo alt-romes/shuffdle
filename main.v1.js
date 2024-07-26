@@ -9,7 +9,6 @@ const helpBtn  = document.getElementById("help")
 const help     = document.getElementById("help-modal")
 const victory  = document.getElementById("victory-modal")
 const overlay  = document.getElementById("wall")
-const hardcoreMode = window.location.pathname.includes("hard") || window.location.hash.includes("hard")
 const defaultCorrectness = hardcoreMode ? "possibly-correct" : "correct" /* easy mode there's only one correct location */
 
 // --------------------------------------------------------------------------------
@@ -172,7 +171,7 @@ const checkWin = () => {
     // Report win
     const now = new Date();
     const datePath = now.getDate() + "-" + (now.getMonth()+1) + "-" + now.getFullYear()
-    plausible('pageview', { u: "https://www.shuffdle.com/win/" + solution + "/" + datePath + "/" + getMoves() + "-moves" })
+    plausible('pageview', { u: "https://www.shuffdle.com/win/" + (hardcoreMode ? "hard/" : "") + solution + "/" + datePath + "/" + getMoves() + "-moves" })
 }
 const showWin = () => {
     [...document.querySelectorAll("main .tile[correct=\"true\"]")].map(e => {
@@ -416,4 +415,18 @@ const showABC = () => {
     h.style.cursor = "default";
     h.innerHTML = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     h.onclick = "";
+}
+
+const hmt = document.getElementById("hardmode-toggle")
+const leadTuto = document.getElementById("lead-tutorial")
+if (hardcoreMode) {
+    hmt.innerHTML = "Easy Mode"
+    hmt.setAttribute("href", "/")
+    document.getElementById("header-line").innerHTML += ". Write it <em>anywhere</em>."
+    leadTuto.innerHTML = "Reconstruct the daily Shuffdle word <em>anywhere</em> with a minimal number of moves. Welcome to Hard Mode."
+}
+else {
+    hmt.innerHTML = "Hard Mode"
+    hmt.setAttribute("href", "/?hard")
+    leadTuto.innerHTML = "Reconstruct the daily Shuffdle word in the <em>bottom row</em> with a minimal number of moves"
 }
