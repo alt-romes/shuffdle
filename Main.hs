@@ -10,7 +10,7 @@ import Text.Read (readMaybe)
 import System.Random
 import System.Random.Stateful
 import Control.Monad
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, catMaybes)
 import Data.Tuple
 import Data.Bifunctor
 
@@ -105,8 +105,7 @@ generateBoard easy word gen = do
       | not make_row_empty && extra_moves_count <= 0
       = pure (b.tiles, nm)
       | otherwise
-      = do ix <- uniformRM (0,size*size-1) gen
-           mov <- uniformRM (minBound @Direction, maxBound @Direction) gen
+      = do (ix, mov) <- genMove b gen
            let (b',nm') = maybe (b,nm) (,nm+1) $ move ix mov b
            loop make_row_empty b' nm' (extra_moves_count - 1)
 
@@ -114,6 +113,17 @@ generateBoard easy word gen = do
 
   return (Board{size, tiles=initialBoard}, nMoves, pick)
 
+-- | Tries to be smarter and generates only moves to holes, which should be all valid.
+genMove :: StatefulGen g m => Board -> g -> m (Int, Direction)
+genMove b gen = do
+  let holes = getHoles b
+  holeIx <- uniformRM (0,length holes - 1) gen
+  let adjacents = getAdjacent (holes !! holeIx) b
+  adjIx  <- uniformRM (0,length adjacents - 1) gen
+  let (adj, dirToAdj) = adjacents !! adjIx
+  return (adj, flipDir dirToAdj {- get dir from adj to hole -})
+
+-- First board I ever solved! Or second.
 sampleBoard = [
   [With 'F', With 'U', With 'U', With 'M', With 'F'],
   [With 'Y', With 'I', With 'M', With 'J', With 'Z'],
@@ -136,8 +146,8 @@ main = do
             modifyMVar isDone (\_ -> pure (True, ()))
             putMVar boardSyn ((b,m,p), (hard_b,hard_m,hard_p))
           void $ forkIO $ do
-            -- After half a minute kill the generation
-            threadDelay (40*1000*1000)
+            -- After 15s kill the generation
+            threadDelay (15*1000*1000)
             done <- readMVar isDone
             when (not done) $ do
               putStrLn "Retrying..."
@@ -201,6 +211,26 @@ boardId Board{tiles} = show $ map snd $ IM.toList tiles
 rowIsEmpty :: [Int] -> Board -> Bool
 rowIsEmpty ixs Board{size, tiles} =
   all (==Empty) $ map (tiles IM.!) ixs
+
+-- | Returns the indices of all holes in the board
+getHoles :: Board -> [Int]
+getHoles Board{tiles} = IM.keys $ IM.filter (== Empty) tiles
+
+-- | Down to up, left to right, and vice versa
+flipDir :: Direction -> Direction
+flipDir U = D
+flipDir D = U
+flipDir R = L
+flipDir L = R
+
+-- | Get adjacent tiles and the direction to which the given tile needs to move
+-- to get to the returned neighbour.
+getAdjacent :: Int -> Board -> [(Int, Direction)]
+getAdjacent ix Board{size, tiles} = catMaybes $
+  flip map [(ix-1, L), (ix+1, R), (ix+size, D), (ix-size, U)] $ \(tgt, d) -> do
+    case IM.lookup tgt tiles of
+      Nothing -> Nothing
+      Just _  -> Just (tgt, d)
 
 --------------------------------------------------------------------------------
 -- * Utils
