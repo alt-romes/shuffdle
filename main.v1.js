@@ -108,6 +108,10 @@ const checkWin = () => {
      * NB: I suppose this would allow the word to be accepted backwards in the
      * last row! That's fine, we've actually never said it couldn't be
      * backwards, just that it had to be in the last row.
+     *
+     * NB: Actually, let's not allow backwards for the hard mode. Perhaps we
+     * can eventually create an even harder which has all the ways, but that
+     * seems unplayable.
      */
     const solutions =
             [...document.querySelectorAll("#board-container .tile["+defaultCorrectness+"=\"true\"]")].map(c => {
@@ -134,23 +138,23 @@ const checkWin = () => {
                     hasWon = true;
                 }
                 // From the end of the row to the start, all must be correct.
-                if (row_ix == 5) {
-                    for (let i = 0; i<5; i++)
-                        if (tiles[i*5 + col_ix].innerHTML != solution[4-i])
-                            return false
-                    for (let i = 0; i<5; i++)
-                        tiles[i*5 + col_ix].setAttribute("correct", true)
-                    hasWon = true;
-                }
-                // From the end of the column to the start, all must be correct.
-                if (col_ix == 5) {
-                    for (let i = 0; i<5; i++)
-                        if (tiles[row_ix*5 + i].innerHTML != solution[4 - i])
-                            return false
-                    for (let i = 0; i<5; i++)
-                        tiles[row_ix*5 + i].setAttribute("correct", true)
-                    hasWon = true;
-                }
+                // if (row_ix == 5) {
+                //     for (let i = 0; i<5; i++)
+                //         if (tiles[i*5 + col_ix].innerHTML != solution[4-i])
+                //             return false
+                //     for (let i = 0; i<5; i++)
+                //         tiles[i*5 + col_ix].setAttribute("correct", true)
+                //     hasWon = true;
+                // }
+                // // From the end of the column to the start, all must be correct.
+                // if (col_ix == 5) {
+                //     for (let i = 0; i<5; i++)
+                //         if (tiles[row_ix*5 + i].innerHTML != solution[4 - i])
+                //             return false
+                //     for (let i = 0; i<5; i++)
+                //         tiles[row_ix*5 + i].setAttribute("correct", true)
+                //     hasWon = true;
+                // }
                 // Only return at the end because if somehow both a column and
                 // row are correct, they should all be marked as correct.
 
@@ -227,7 +231,8 @@ const isTileCorrect = t => {
      */
     if (hardcoreMode)
         return tval == solution[col_ix] || tval == solution[row_ix]
-                || tval == solution[4 - col_ix] || tval == solution[4 - row_ix]
+                // No longer do backwards words for hard.
+                // || tval == solution[4 - col_ix] || tval == solution[4 - row_ix]
     else
         return row_ix == 4 && tval == solution[col_ix]
 }
@@ -430,3 +435,5 @@ else {
     hmt.setAttribute("href", "/?hard")
     leadTuto.innerHTML = "Reconstruct the daily Shuffdle word in the <em>bottom row</em> with a minimal number of moves"
 }
+
+[...document.getElementsByClassName("hard-only")].forEach(el => el.hidden = false);
