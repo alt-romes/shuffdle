@@ -127,7 +127,7 @@ main > aside {
 #help {
     cursor: pointer;
     text-decoration: underline;
-    text-underline-position: under;
+    /* text-underline-position: under; */
 
     text-decoration-color: rgba(0,0,0,0.2);
     transition: text-decoration-color 200ms;
@@ -243,8 +243,6 @@ main > aside {
 
 #restart-qm {
     text-align: right;
-    opacity: 0;
-    transition: opacity 500ms ease-in;
     cursor: pointer;
 }
 

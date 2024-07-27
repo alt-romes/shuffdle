@@ -208,12 +208,6 @@ const showWin = () => {
 }
 const flashMaxReached = () => {
     playAnim(counter, "gelatine")
-
-    restartq.hidden = false;
-    void restartq.offsetWidth;
-    restartq.style.opacity = 1;
-
-    document.getElementById("hint").innerHTML=""
 }
 const countMove = () => {
     moves.innerHTML = getMoves() + 1
