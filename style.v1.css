@@ -251,18 +251,24 @@ main > aside {
     cursor: pointer;
 }
 
-#share-victory {
-    letter-spacing: 1px;
+#share {
     text-align: center;
-    border-bottom: 2px solid var(--red);
     margin: 0 auto;
-    font-size: 1em;
     color: var(--black);
-    text-decoration: none;
     cursor: pointer;
+    border: 1px solid var(--black);
+    padding: 0.25em 1em;
+    border-radius: 2em;
+    transition: background-color 100ms ease-in, color 100ms ease-in;
 }
-#share-victory:hover {
-    border-bottom-style: dashed;
+
+#share:hover {
+    background-color: var(--black);
+    color: white;
+}
+
+#share:active {
+
 }
 
 /* --------------------------------------------------------------------------------

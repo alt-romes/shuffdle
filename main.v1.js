@@ -413,6 +413,24 @@ const validDropDirection = (orig, tgt) => {
 
 });
 
+const share = async () => {
+    const data =
+            { url: ""+window.location.origin
+            , text: "I finished today's" +
+                        (hardcoreMode?" hard-mode " : " ") +
+                        "Shuffdle puzzle in " + getMoves() + " moves."
+            , title: "Shuffdle"
+            }
+    try {
+        if (navigator.canShare && navigator.share && navigator.canShare(data))
+            await navigator.share(data).then(() => print("Shared!")).catch(err => console.warn(err))
+    } catch (err) {
+        console.warn(err);
+    }
+}
+
+document.getElementById("share").addEventListener("click", share)
+
 /* Show a Hint */
 const showABC = () => {
     const h = document.getElementById("hint")
@@ -437,3 +455,4 @@ else {
 }
 
 [...document.getElementsByClassName("hard-only")].forEach(el => el.hidden = false);
+
