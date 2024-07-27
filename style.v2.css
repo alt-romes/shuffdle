@@ -16,7 +16,7 @@
 html {
     font-family: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, serif;
     overflow-y: hidden;
-    height: 100vh;
+    height: 100%;
 }
 
 html, body {
@@ -42,7 +42,7 @@ body > main {
     margin: 0 auto;
     max-width: 28rem;
     width: 100%;
-    padding: 0em 1em 1em 1em; /* T R B L */
+    padding: 0em 1em 0.25em 1em; /* T R B L */
     flex-grow: 1;
     box-sizing: border-box;
 }
