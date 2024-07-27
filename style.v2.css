@@ -113,9 +113,8 @@ body > footer {
 main > aside {
     padding: 1rem 0;
     display: flex;
-    justify-content: right;
-    align-items: stretch;
-    gap: 1em;
+    justify-content: center;
+    align-items: center;
     font-weight: bold;
 }
 
@@ -230,15 +229,15 @@ main > aside {
 .smaller-options {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: bottom;
     margin-top: -1em;
-    gap: 1em;
 }
 
 .small-option {
     color: var(--gray);
     text-decoration: underline;
     text-decoration-style: dotted;
+    font-size: 0.9em;
 }
 
 #restart-qm {

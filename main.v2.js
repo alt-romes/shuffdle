@@ -429,7 +429,9 @@ document.getElementById("share").addEventListener("click", share)
 const showABC = () => {
     const h = document.getElementById("hint")
     h.classList.remove("small-option")
+    // But keep the properties we want updated from small-option
     h.style.cursor = "default";
+    h.style.fontSize = "0.9em";
     h.innerHTML = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     h.onclick = "";
 }
