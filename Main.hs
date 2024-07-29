@@ -13,6 +13,7 @@ import Control.Monad
 import Data.Maybe (fromMaybe, catMaybes)
 import Data.Tuple
 import Data.Bifunctor
+import System.Timeout
 
 move :: Int {- index -} -> Direction -> Board -> Maybe Board
 move ix dir Board{size, tiles} = do
@@ -136,25 +137,19 @@ main = do
     wordIx <- randomRIO (0, length ls - 1)
     let word = ls !! wordIx
     putStrLn $ "target-word:" ++ word
-    boardSyn <- newEmptyMVar
-    isDone   <- newMVar False
     let tryGenBoard = do
-          genTid <- forkIO $ do
+          -- After 15s kill the generation
+          res <- timeout (15*1000*1000) $ do
             -- Must be forced otherwise the time will be spent after taking from the MVar!
             ((!b,!m, !p), g') <- flip runStateGen (generateBoard True word) <$> initStdGen
             (!hard_b,!hard_m, !hard_p) <- flip runStateGen_ (generateBoard False word) <$> pure g'
-            modifyMVar isDone (\_ -> pure (True, ()))
-            putMVar boardSyn ((b,m,p), (hard_b,hard_m,hard_p))
-          void $ forkIO $ do
-            -- After 15s kill the generation
-            threadDelay (15*1000*1000)
-            done <- readMVar isDone
-            when (not done) $ do
+            return ((b,m,p), (hard_b,hard_m,hard_p))
+          case res of
+            Nothing -> do
               putStrLn "Retrying..."
-              killThread genTid
               tryGenBoard
-    tryGenBoard
-    ((board, nMoves, pick), (hard_board, hard_nMoves, hard_pick)) <- takeMVar boardSyn
+            Just x  -> return x
+    ((board, nMoves, pick), (hard_board, hard_nMoves, hard_pick)) <- tryGenBoard
     putStrLn $ "board-id:" ++ boardId board
     putStrLn $ "Constructing the solution took " ++ show nMoves ++ " moves"
     putStrLn $ "Solution pos " ++ show pick
@@ -162,9 +157,6 @@ main = do
     putStrLn $ "hard-board-id:" ++ boardId hard_board
     putStrLn $ "Constructing the hard board took " ++ show hard_nMoves ++ " moves"
     putStrLn $ "Hard solution pos " ++ show hard_pick
-    --
-    -- loop board
-    -- loop (boardFromRows sampleBoard)
 
   where
   loop game = do
