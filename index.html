@@ -44,9 +44,9 @@
                 <a id="restart-qm" onclick="location.reload(); return false;" class="small-option">restart?</a>
             </div>
             <script>
-                const the_board_id = ['J','C','Z','M','T','K','G','Z','U','V','Q','H','A','Y','R','U','N','U','E','B','_','_','_','_','_']
-                const the_hard_board_id = ['R','N','_','J','D','L','_','_','Z','E','W','B','U','W','Q','Z','O','X','_','J','M','H','_','D','C']
-                const the_word_goal = "COWER"
+                const the_board_id = ['K','I','I','M','C','Z','H','J','A','Y','J','F','C','O','B','U','X','U','S','L','_','_','_','_','_']
+                const the_hard_board_id = ['H','K','P','L','_','H','E','O','S','N','J','_','M','U','K','_','J','_','D','N','Q','J','M','R','_']
+                const the_word_goal = "CLIMB"
                 document.getElementById("solution").innerHTML = the_word_goal
                 const container = document.getElementById("board-container")
                 for (x of (hardcoreMode ? the_hard_board_id : the_board_id)) {
