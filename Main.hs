@@ -138,8 +138,8 @@ main = do
     let word = ls !! wordIx
     putStrLn $ "target-word:" ++ word
     let tryGenBoard = do
-          -- After 15s kill the generation
-          res <- timeout (15*1000*1000) $ do
+          -- After 10s kill the generation
+          res <- timeout (10*1000*1000) $ do
             -- Must be forced otherwise the time will be spent after taking from the MVar!
             ((!b,!m, !p), g') <- flip runStateGen (generateBoard True word) <$> initStdGen
             (!hard_b,!hard_m, !hard_p) <- flip runStateGen_ (generateBoard False word) <$> pure g'
