@@ -63,7 +63,7 @@ executable shuffled
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base, containers, random
+    build-depends:    base, containers, random, mtl
 
     -- Base language which the package is written in.
     default-language: GHC2021

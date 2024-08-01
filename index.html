@@ -30,7 +30,7 @@
         </script>
     </head>
     <body>
-        <h1 id="header-line" class="dimmable">The <span id="shuffled">Shuffdle</span> word is <span id="solution"></span> (hard!)</h1>
+        <h1 id="header-line" class="dimmable">The <span id="shuffled">Shuffdle</span> word is <span id="solution"></span></h1>
         <main class="dimmable">
             <div class="container" id="board-container"></div>
             <aside>
@@ -44,9 +44,9 @@
                 <a id="restart-qm" onclick="location.reload(); return false;" class="small-option">restart?</a>
             </div>
             <script>
-                const the_board_id = ['Q','L','Y','O','D','D','A','B','F','X','R','F','T','S','P','G','S','P','B','K','_','_','_','_','_']
-                const the_hard_board_id = ['_','A','I','J','G','Z','P','W','_','_','Q','V','T','_','V','Q','O','_','J','P','J','D','B','K','A']
-                const the_word_goal = "PICKY"
+                const the_board_id = ['A','O','K','P','T','T','O','W','D','X','M','Q','O','R','X','E','V','V','H','O','_','_','_','_','_']
+                const the_hard_board_id = ['_','Q','I','W','V','K','L','X','_','_','_','A','_','T','J','Q','A','K','L','X','V','U','U','U','E']
+                const the_word_goal = "RUSTY"
                 document.getElementById("solution").innerHTML = the_word_goal
                 const container = document.getElementById("board-container")
                 for (x of (hardcoreMode ? the_hard_board_id : the_board_id)) {
