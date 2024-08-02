@@ -44,9 +44,9 @@
                 <a id="restart-qm" onclick="location.reload(); return false;" class="small-option">restart?</a>
             </div>
             <script>
-                const the_board_id = ['A','O','K','P','T','T','O','W','D','X','M','Q','O','R','X','E','V','V','H','O','_','_','_','_','_']
-                const the_hard_board_id = ['_','Q','I','W','V','K','L','X','_','_','_','A','_','T','J','Q','A','K','L','X','V','U','U','U','E']
-                const the_word_goal = "RUSTY"
+                const the_board_id = ['V','V','X','K','D','N','G','T','S','V','P','X','L','S','F','Y','I','D','S','U','_','_','_','_','_']
+                const the_hard_board_id = ['O','R','O','L','Y','D','_','Q','J','D','M','B','_','Q','B','B','X','V','_','U','O','_','H','R','_']
+                const the_word_goal = "LATCH"
                 document.getElementById("solution").innerHTML = the_word_goal
                 const container = document.getElementById("board-container")
                 for (x of (hardcoreMode ? the_hard_board_id : the_board_id)) {
