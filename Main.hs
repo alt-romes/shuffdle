@@ -141,8 +141,8 @@ sampleBoard = [
   [Empty, Empty, Empty, Empty, Empty]
               ]
 main = do
-    print $ length $ (levels $ (puzzleSearchSpace (boardFromRows sampleBoard))) !! 10
-    exitWith ExitSuccess
+    -- print $ length $ (levels $ (puzzleSearchSpace (boardFromRows sampleBoard))) !! 10
+    -- exitWith ExitSuccess
     ls <- lines <$> readFile "wordle-La.txt"
     wordIx <- randomRIO (0, length ls - 1)
     let word = ls !! wordIx
