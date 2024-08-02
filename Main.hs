@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedRecordDot, RecordWildCards, LambdaCase, TypeApplications, ViewPatterns #-}
 
+import System.Exit
 import System.Environment
+import Control.Monad.Reader
 import Control.Concurrent
 import Control.Concurrent.MVar
 import qualified Data.IntMap as IM
@@ -14,6 +16,7 @@ import Data.Maybe (fromMaybe, catMaybes)
 import Data.Tuple
 import Data.Bifunctor
 import System.Timeout
+import Data.Tree
 
 move :: Int {- index -} -> Direction -> Board -> Maybe Board
 move ix dir Board{size, tiles} = do
@@ -124,6 +127,11 @@ genMove b gen = do
   let (adj, dirToAdj) = adjacents !! adjIx
   return (adj, flipDir dirToAdj {- get dir from adj to hole -})
 
+possibleMoves :: Board -> [(Int, Direction)] {-^ a tile that can move and a direction it can move in -}
+possibleMoves b =
+  [ (adj, flipDir dirToAdj) | h <- getHoles b, (adj, dirToAdj) <- getAdjacent h b ]
+
+
 -- First board I ever solved! Or second.
 sampleBoard = [
   [With 'F', With 'U', With 'U', With 'M', With 'F'],
@@ -133,6 +141,8 @@ sampleBoard = [
   [Empty, Empty, Empty, Empty, Empty]
               ]
 main = do
+    print $ length $ (levels $ (puzzleSearchSpace (boardFromRows sampleBoard))) !! 10
+    exitWith ExitSuccess
     ls <- lines <$> readFile "wordle-La.txt"
     wordIx <- randomRIO (0, length ls - 1)
     let word = ls !! wordIx
@@ -165,6 +175,21 @@ main = do
     case readMaybe @(Int, Direction) inp of
       Nothing -> loop game
       Just (ix, dir) -> loop $ fromMaybe game $ move ix dir game
+
+--------------------------------------------------------------------------------
+-- * Solver
+
+type Move = (Int, Direction)
+
+puzzleSearchSpace :: Board -> Tree Board
+puzzleSearchSpace board =
+   Node board (map puzzleSearchSpace $ nextBoards board)
+
+nextBoards :: Board -> [Board]
+nextBoards b = [ b' | (i, d) <- possibleMoves b, Just b' <- [move i d b] ]
+
+-- solve :: Tree Board -> [Move]
+-- solve = _
 
 --------------------------------------------------------------------------------
 -- * Board
@@ -215,14 +240,22 @@ flipDir D = U
 flipDir R = L
 flipDir L = R
 
+-- | Where do we go if we follow this direction?
+applyDir :: Board -> Int -> Direction -> Int
+applyDir Board{size} i U = i - size
+applyDir Board{size} i D = i + size
+applyDir Board{} i R = i + 1
+applyDir Board{} i L = i - 1
+
 -- | Get adjacent tiles and the direction to which the given tile needs to move
--- to get to the returned neighbour.
+-- to get to the returned neighbour. The neighbour must not be empty.
 getAdjacent :: Int -> Board -> [(Int, Direction)]
-getAdjacent ix Board{size, tiles} = catMaybes $
-  flip map [(ix-1, L), (ix+1, R), (ix+size, D), (ix-size, U)] $ \(tgt, d) -> do
+getAdjacent ix b@Board{size, tiles} = catMaybes $
+  flip map [(applyDir b ix L, L), (applyDir b ix R, R), (applyDir b ix D, D), (applyDir b ix U, U)] $ \(tgt, d) -> do
     case IM.lookup tgt tiles of
-      Nothing -> Nothing
-      Just _  -> Just (tgt, d)
+      Nothing    -> Nothing
+      Just Empty -> Nothing
+      Just _     -> Just (tgt, d)
 
 --------------------------------------------------------------------------------
 -- * Utils
@@ -255,3 +288,4 @@ instance UniformRange Direction where
 -- * Test
 
 roundTripBoard a = a == (boardToRows . boardFromRows) a
+
