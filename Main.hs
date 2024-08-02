@@ -123,9 +123,13 @@ genMove b gen = do
   let holes = getHoles b
   holeIx <- uniformRM (0,length holes - 1) gen
   let adjacents = getAdjacent (holes !! holeIx) b
-  adjIx  <- uniformRM (0,length adjacents - 1) gen
-  let (adj, dirToAdj) = adjacents !! adjIx
-  return (adj, flipDir dirToAdj {- get dir from adj to hole -})
+  if length adjacents > 0 then do
+    adjIx  <- uniformRM (0,length adjacents - 1) gen
+    let (adj, dirToAdj) = adjacents !! adjIx
+    return (adj, flipDir dirToAdj {- get dir from adj to hole -})
+  else do
+    -- No valid filled adjacent tiles. Try again.
+    genMove b gen
 
 possibleMoves :: Board -> [(Int, Direction)] {-^ a tile that can move and a direction it can move in -}
 possibleMoves b =
@@ -251,7 +255,8 @@ applyDir Board{} i L = i - 1
 -- to get to the returned neighbour. The neighbour must not be empty.
 getAdjacent :: Int -> Board -> [(Int, Direction)]
 getAdjacent ix b@Board{size, tiles} = catMaybes $
-  flip map [(applyDir b ix L, L), (applyDir b ix R, R), (applyDir b ix D, D), (applyDir b ix U, U)] $ \(tgt, d) -> do
+  flip map
+    [(applyDir b ix L, L), (applyDir b ix R, R), (applyDir b ix D, D), (applyDir b ix U, U)] $ \(tgt, d) -> do
     case IM.lookup tgt tiles of
       Nothing    -> Nothing
       Just Empty -> Nothing
