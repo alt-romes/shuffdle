@@ -387,22 +387,12 @@ const validDropDirection = (orig, tgt) => {
                      null) :
                 swipeAngle > 3*pi/4 ? "ArrowLeft" :
                 null
-        print(startX, startY, touchAtEnd.pageX, touchAtEnd.pageY)
-        print(swipeVec)
-        print(swipeAngle * (180 / Math.PI))
-        print(dir)
 
         if (dir != null) {
             ev.preventDefault();
             move(document.querySelector("#board-container .tile[ix=\""+origin_ix+"\"]"), dir)
         }
 
-        /* We previously did this, but it was too precise (the touch end had to
-         * be precisely in the target square)
-         */
-        // const targetEl = document.elementFromPoint(touchAtEnd.pageX, touchAtEnd.pageY)
-        // const target_ix = Number(targetEl.getAttribute("ix"))
-        // const dir = validDropDirection(origin_ix, target_ix)
     });
 
 });
