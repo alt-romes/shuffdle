@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedRecordDot, RecordWildCards, LambdaCase, TypeApplications, ViewPatterns #-}
 
+import Debug.Trace
 import System.Exit
 import System.Environment
 import Control.Monad.Reader
@@ -12,7 +13,7 @@ import Text.Read (readMaybe)
 import System.Random
 import System.Random.Stateful
 import Control.Monad
-import Data.Maybe (fromMaybe, catMaybes)
+import Data.Maybe
 import Data.Tuple
 import Data.Bifunctor
 import System.Timeout
@@ -136,7 +137,7 @@ possibleMoves b =
   [ (adj, flipDir dirToAdj) | h <- getHoles b, (adj, dirToAdj) <- getAdjacent h b ]
 
 
--- First board I ever solved! Or second.
+-- First board I ever solved! Or second. Word=REFER.
 sampleBoard = [
   [With 'F', With 'U', With 'U', With 'M', With 'F'],
   [With 'Y', With 'I', With 'M', With 'J', With 'Z'],
@@ -145,8 +146,10 @@ sampleBoard = [
   [Empty, Empty, Empty, Empty, Empty]
               ]
 main = do
+    let w = "REFER"
     -- print $ length $ (levels $ (puzzleSearchSpace (boardFromRows sampleBoard))) !! 10
-    -- exitWith ExitSuccess
+    print $ solve w $ puzzleSearchSpace (boardFromRows sampleBoard, NoMove)
+    exitWith ExitSuccess
     ls <- lines <$> readFile "wordle-La.txt"
     wordIx <- randomRIO (0, length ls - 1)
     let word = ls !! wordIx
@@ -183,18 +186,35 @@ main = do
 --------------------------------------------------------------------------------
 -- * Solver
 
-type Move = (Int, Direction)
+data Move = Move Int Direction
+          | NoMove -- ^ For the starting board
+          deriving (Eq, Show)
 
-puzzleSearchSpace :: Board -> Tree Board
-puzzleSearchSpace board =
-   Node board (map puzzleSearchSpace $ nextBoards board)
+puzzleSearchSpace :: (Board, Move) -> Tree (Board, Move)
+puzzleSearchSpace (board, mv) =
+   Node (board, mv) (map puzzleSearchSpace $ nextBoards board)
 
-nextBoards :: Board -> [Board]
-nextBoards b = [ b' | (i, d) <- possibleMoves b, Just b' <- [move i d b] ]
+nextBoards :: Board -> [(Board, Move)]
+nextBoards b = [ (b', Move i d) | (i, d) <- possibleMoves b, Just b' <- [move i d b] ]
 
--- solve :: Tree Board -> [Move]
--- solve = _
+solve :: String -> Tree (Board, Move) -> Maybe [Move]
+solve sol = go 0 [] where
 
+  go d mvs (Node (b,mv) bs)
+    | checkEasyWin sol b
+    = Just (mv:mvs)
+    | d == 50
+    = Nothing
+    | otherwise
+    = case mapMaybe (go (d+1) (mv:mvs)) bs of
+        []  -> Nothing
+        x:_ -> Just x
+
+checkEasyWin :: String -> Board -> Bool
+checkEasyWin word Board{size, tiles} =
+  map With word == map (tiles IM.!) ixs
+    where
+      ixs = [size*(size-1)..size*size-1]
 --------------------------------------------------------------------------------
 -- * Board
 
