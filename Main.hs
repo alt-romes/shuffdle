@@ -14,6 +14,7 @@ import System.Random
 import System.Random.Stateful
 import Control.Monad
 import Data.Maybe
+import Data.Ord
 import Data.Tuple
 import Data.Bifunctor
 import System.Timeout
@@ -190,23 +191,41 @@ data Move = Move Int Direction
           | NoMove -- ^ For the starting board
           deriving (Eq, Show)
 
-puzzleSearchSpace :: (Board, Move) -> Tree (Board, Move)
-puzzleSearchSpace (board, mv) =
-   Node (board, mv) (map puzzleSearchSpace $ nextBoards board)
+type Cost = Int
+
+puzzleSearchSpace :: String -> Board -> Tree (Board, Move, Cost)
+puzzleSearchSpace sol board = go (board, NoMove) where
+  go (b,m) = Node (b, m, costToWin sol b) (map go $ nextBoards board)
 
 nextBoards :: Board -> [(Board, Move)]
 nextBoards b = [ (b', Move i d) | (i, d) <- possibleMoves b, Just b' <- [move i d b] ]
 
-solve :: String -> Tree (Board, Move) -> Maybe [Move]
-solve sol = go 0 [] where
+costToWin :: String -> Board -> Cost
+costToWin sol = _
 
-  go d mvs (Node (b,mv) bs)
+solve :: String -> Tree (Board, Move, Cost) -> Maybe [Move]
+solve sol init = idaStar where
+
+  idaStar =
+    dfid (bestFirst init) [100,200..]
+      where
+        bestFirst (Node b bs) =
+          Node b $
+            map bestFirst $
+              List.sortOn (\(Node (_,_,c) _) -> c) bs
+
+  dfid problem cutoffs
+    = case mapMaybe (\cutoff -> dfs cutoff [] problem) cutoffs of
+        [] -> Nothing
+        (firstResult:_) -> Just firstResult
+
+  dfs cutoff mvs (Node (b,mv,cost) bs)
     | checkEasyWin sol b
     = Just (mv:mvs)
-    | d == 50
+    | cost >= cutoff
     = Nothing
     | otherwise
-    = case mapMaybe (go (d+1) (mv:mvs)) bs of
+    = case mapMaybe (dfs cutoff (mv:mvs)) bs of
         []  -> Nothing
         x:_ -> Just x
 
@@ -215,6 +234,7 @@ checkEasyWin word Board{size, tiles} =
   map With word == map (tiles IM.!) ixs
     where
       ixs = [size*(size-1)..size*size-1]
+
 --------------------------------------------------------------------------------
 -- * Board
 
