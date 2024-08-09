@@ -7,7 +7,7 @@ import Control.Monad.Reader
 import Control.Concurrent
 import Control.Concurrent.MVar
 import qualified Data.IntMap as IM
--- import qualified Data.IntSet as IS
+import qualified Data.IntSet as IS
 import qualified Data.List as List
 import Text.Read (readMaybe)
 import System.Random
@@ -148,12 +148,13 @@ sampleBoard = [
   [With 'Q', With 'R', With 'W', With 'D', With 'M'],
   [Empty, Empty, Empty, Empty, Empty]
               ]
+
 main = do
     let w = "REFER"
     -- print $ length $ (levels $ (puzzleSearchSpace (boardFromRows sampleBoard))) !! 10
-    timeout 10_000_000 $ do
-      print $ solve w $ annotateCosts w $ puzzleSearchSpace (boardFromRows sampleBoard)
-    exitWith ExitSuccess
+    -- timeout 10_000_000 $ do
+    -- print $ solve w $ annotateCosts w $ puzzleSearchSpace (boardFromRows sampleBoard)
+    -- exitWith ExitSuccess
     ls <- lines <$> readFile "wordle-La.txt"
     wordIx <- randomRIO (0, length ls - 1)
     let word = ls !! wordIx
@@ -205,21 +206,26 @@ annotateCosts sol = go 0 where
   go pathCost (Node (b,m) ns) =
     let h = costToWin sol b
         g = pathCost
-     in Node (b, m, g + h) (map (go (g+h)) ns)
+        f = g + h
+     in Node (b, m, f) (map (go f) ns)
 
 nextBoards :: Board -> [(Board, Move)]
-nextBoards b = [ (b', Move i d) | (i, d) <- possibleMoves b, Just b' <- [move i d b] ]
+nextBoards b =
+  [ (b', Move i d) | (i, d) <- possibleMoves b, Just b' <- [move i d b] ]
 
 costToWin :: String -> Board -> Cost
 costToWin sol Board{size,tiles} =
-  fixedCost + minimum varCosts
+    fixedCost + minimum varCosts
   where
    varCosts = do
+     ls <- map (map snd) varCostsFull
+     pure $ foldr ((+) . fst) 0 ls
+   varCostsFull = do
      ls <- forM (IM.toList multiOpt) $ \(k, vars) -> do
        (cost, tile) <- NE.toList vars
-       pure @[] (cost, tile)
-     guard $ length ls == length (List.nubBy ((==) `on` snd) ls)
-     pure $ foldr ((+) . fst) 0 ls
+       pure @[] (k, (cost, tile))
+     guard $ hasNoDuplicateTiles IS.empty $ map snd ls
+     pure ls
    fixedCost = IM.foldr ((+) . fst . NE.head) 0 singleOpt
    (singleOpt, multiOpt) = IM.partition ((== 1) . NE.length) costMap
    costMap =
@@ -249,11 +255,17 @@ costToWin sol Board{size,tiles} =
     , let m = abs (h - s) + v
     ]
 
+   hasNoDuplicateTiles _ [] = True
+   hasNoDuplicateTiles acc ((_,t):xs)
+     = if IS.member t acc
+        then False
+        else hasNoDuplicateTiles (IS.insert t acc) xs
+
 solve :: String -> Tree (Board, Move, Cost) -> Maybe [Move]
 solve sol init = idaStar where
 
   idaStar =
-    dfid (bestFirst init) [100,200..]
+    dfid (bestFirst init) [10,20..]
       where
         bestFirst (Node b bs) =
           Node b $
@@ -261,14 +273,14 @@ solve sol init = idaStar where
               List.sortOn (\(Node (_,_,c) _) -> c) bs
 
   dfid problem cutoffs
-    = case mapMaybe (\cutoff -> dfs 0 cutoff [] problem) cutoffs of
+    = case mapMaybe (\cutoff -> traceShow cutoff $! dfs 0 cutoff [] problem) cutoffs of
         [] -> Nothing
         (firstResult:_) -> Just firstResult
 
   dfs !d cutoff mvs (Node (b,mv,cost) bs)
     | checkEasyWin sol b
     = Just (mv:mvs)
-    | cost >= cutoff || d == 50
+    | cost >= cutoff || d >= 50
     = Nothing
     | otherwise
     = case mapMaybe (dfs (d+1) cutoff (mv:mvs)) bs of
@@ -276,7 +288,7 @@ solve sol init = idaStar where
         x:_ -> Just x
 
 checkEasyWin :: String -> Board -> Bool
-checkEasyWin word Board{size, tiles} =
+checkEasyWin word Board{size, tiles} = {-# SCC checkEasyWin #-}
   map With word == map (tiles IM.!) ixs
     where
       ixs = [size*(size-1)..size*size-1]
