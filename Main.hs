@@ -19,6 +19,8 @@ import Data.Tuple
 import Data.Bifunctor
 import System.Timeout
 import Data.Tree
+import qualified Data.List.NonEmpty as NE
+import Data.Function
 
 move :: Int {- index -} -> Direction -> Board -> Maybe Board
 move ix dir Board{size, tiles} = do
@@ -149,7 +151,8 @@ sampleBoard = [
 main = do
     let w = "REFER"
     -- print $ length $ (levels $ (puzzleSearchSpace (boardFromRows sampleBoard))) !! 10
-    print $ solve w $ puzzleSearchSpace (boardFromRows sampleBoard, NoMove)
+    timeout 10_000_000 $ do
+      print $ solve w $ annotateCosts w $ puzzleSearchSpace (boardFromRows sampleBoard)
     exitWith ExitSuccess
     ls <- lines <$> readFile "wordle-La.txt"
     wordIx <- randomRIO (0, length ls - 1)
@@ -193,15 +196,58 @@ data Move = Move Int Direction
 
 type Cost = Int
 
-puzzleSearchSpace :: String -> Board -> Tree (Board, Move, Cost)
-puzzleSearchSpace sol board = go (board, NoMove) where
-  go (b,m) = Node (b, m, costToWin sol b) (map go $ nextBoards board)
+puzzleSearchSpace :: Board -> Tree (Board, Move)
+puzzleSearchSpace board = go (board, NoMove) where
+  go (b,m) = Node (b, m) (map go $ nextBoards board)
+
+annotateCosts :: String -> Tree (Board, Move) -> Tree (Board, Move, Cost)
+annotateCosts sol = go 0 where
+  go pathCost (Node (b,m) ns) =
+    let h = costToWin sol b
+        g = pathCost
+     in Node (b, m, g + h) (map (go (g+h)) ns)
 
 nextBoards :: Board -> [(Board, Move)]
 nextBoards b = [ (b', Move i d) | (i, d) <- possibleMoves b, Just b' <- [move i d b] ]
 
 costToWin :: String -> Board -> Cost
-costToWin sol = _
+costToWin sol Board{size,tiles} =
+  fixedCost + minimum varCosts
+  where
+   varCosts = do
+     ls <- forM (IM.toList multiOpt) $ \(k, vars) -> do
+       (cost, tile) <- NE.toList vars
+       pure @[] (cost, tile)
+     guard $ length ls == length (List.nubBy ((==) `on` snd) ls)
+     pure $ foldr ((+) . fst) 0 ls
+   fixedCost = IM.foldr ((+) . fst . NE.head) 0 singleOpt
+   (singleOpt, multiOpt) = IM.partition ((== 1) . NE.length) costMap
+   costMap =
+    IM.fromListWith (<>)
+    [
+      (s, NE.singleton (m, ix)) -- for stride s, piece ix is solution in m moves
+
+    | (ix,tile) <- IM.toList tiles
+
+    , let (row_ix, col_ix) = ix `divMod` size
+
+    -- Trivial guards
+    , row_ix < 4
+    , With c <- [tile]
+
+    , let h = col_ix            -- horiz dist to first col
+          v = size - 1 - row_ix -- vert dist to last row
+    , s <- [0..4]               -- col stride into sol
+
+    -- Value the piece would have in the sol at this stride
+    , let vs = toEnum @Char (fromEnum c - h + v + s)
+
+    -- Guard is solution
+    , vs == sol !! s
+
+    -- Number of moves to get there
+    , let m = abs (h - s) + v
+    ]
 
 solve :: String -> Tree (Board, Move, Cost) -> Maybe [Move]
 solve sol init = idaStar where
@@ -215,17 +261,17 @@ solve sol init = idaStar where
               List.sortOn (\(Node (_,_,c) _) -> c) bs
 
   dfid problem cutoffs
-    = case mapMaybe (\cutoff -> dfs cutoff [] problem) cutoffs of
+    = case mapMaybe (\cutoff -> dfs 0 cutoff [] problem) cutoffs of
         [] -> Nothing
         (firstResult:_) -> Just firstResult
 
-  dfs cutoff mvs (Node (b,mv,cost) bs)
+  dfs !d cutoff mvs (Node (b,mv,cost) bs)
     | checkEasyWin sol b
     = Just (mv:mvs)
-    | cost >= cutoff
+    | cost >= cutoff || d == 50
     = Nothing
     | otherwise
-    = case mapMaybe (dfs cutoff (mv:mvs)) bs of
+    = case mapMaybe (dfs (d+1) cutoff (mv:mvs)) bs of
         []  -> Nothing
         x:_ -> Just x
 
