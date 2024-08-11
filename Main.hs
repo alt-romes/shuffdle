@@ -21,6 +21,7 @@ import System.Timeout
 import Data.Tree
 import qualified Data.List.NonEmpty as NE
 import Data.Function
+import Data.Either
 
 move :: Int {- index -} -> Direction -> Board -> Maybe Board
 move ix dir Board{size, tiles} = do
@@ -152,7 +153,7 @@ sampleBoard = [
 main = do
     let w = "REFER"
     -- print $ length $ (levels $ (puzzleSearchSpace (boardFromRows sampleBoard))) !! 10
-    -- timeout 10_000_000 $ do
+    -- timeout 100_000_000 $ do
     -- print $ solve w $ annotateCosts w $ puzzleSearchSpace (boardFromRows sampleBoard)
     -- exitWith ExitSuccess
     ls <- lines <$> readFile "wordle-La.txt"
@@ -199,7 +200,7 @@ type Cost = Int
 
 puzzleSearchSpace :: Board -> Tree (Board, Move)
 puzzleSearchSpace board = go (board, NoMove) where
-  go (b,m) = Node (b, m) (map go $ nextBoards board)
+  go (b,m) = Node (b, m) (map go $ nextBoards b)
 
 annotateCosts :: String -> Tree (Board, Move) -> Tree (Board, Move, Cost)
 annotateCosts sol = go 0 where
@@ -214,7 +215,7 @@ nextBoards b =
   [ (b', Move i d) | (i, d) <- possibleMoves b, Just b' <- [move i d b] ]
 
 costToWin :: String -> Board -> Cost
-costToWin sol Board{size,tiles} =
+costToWin sol board@Board{size,tiles} =
     fixedCost + minimum varCosts
   where
    varCosts = do
@@ -226,12 +227,21 @@ costToWin sol Board{size,tiles} =
        pure @[] (k, (cost, tile))
      guard $ hasNoDuplicateTiles IS.empty $ map snd ls
      pure ls
-   fixedCost = IM.foldr ((+) . fst . NE.head) 0 singleOpt
+   fixedCost =
+     let forcedTilesCost = IM.foldr ((+) . fst . NE.head) 0 singleOpt
+         -- If a hole is adjacent to at least one other hole it's good
+         holesAdjacentCost  = sum
+           [ holeAdjacent
+           | (ix, tile) <- IM.toList tiles
+           , Empty <- [tile]
+           , let holeAdjacent = product $ map (\case Empty -> 0; With _ -> 1) $ map (tiles IM.!) $ map fst $ getAdjacent ix board
+           ]
+      in forcedTilesCost + holesAdjacentCost
    (singleOpt, multiOpt) = IM.partition ((== 1) . NE.length) costMap
    costMap =
     IM.fromListWith (<>)
     [
-      (s, NE.singleton (m, ix)) -- for stride s, piece ix is solution in m moves
+      (s, NE.singleton (cost, ix)) -- for stride s, piece ix is solution in m moves
 
     | (ix,tile) <- IM.toList tiles
 
@@ -251,9 +261,30 @@ costToWin sol Board{size,tiles} =
     -- Guard is solution
     , vs == sol !! s
 
-    -- Number of moves to get there
-    , let m = abs (h - s) + v
+    -- Horizontal moves to get there
+    , let hm = abs (h - s)
+    -- Vertical moves
+    , let vm = v
+
+    -- Direct vertical path to get there
+    , let vpath = [tiles IM.! vti | let tix = ix+(vm*size), vti <- [ix..tix]]
+    -- The two direct horizontal paths
+    , let hpath1 = [tiles IM.! hti | let tix = ix - h + s, hti <- if tix < ix then [ix,ix-1..tix] else [ix..tix]]
+    , let hpath2 = [tiles IM.! hti | let six = ix+(vm*size), let tix = six - h + s, hti <- if tix < six then [six,six-1..tix] else [six..tix]]
+    -- Count as cost non-empty tiles in possible direct paths
+    , let countNE = length . filter (/= Empty)
+    , let wts = countNE vpath + (countNE hpath1 + countNE hpath2) `div` 2
+
+    -- Penalise holes far away, we usually need a strip of close-by holes
+    , let sparseCost = [manhattanDistance i ix | let holes = IM.toList $ IM.filter (==Empty) tiles, (i,_) <- holes]
+
+    , let cost = (manhattanDistance ix (size*(size-1)+s)) -- + wts -- + (sum sparseCost `div` size)
     ]
+
+   manhattanDistance tix tjx =
+     let (ir, ic) = tix `divMod` size
+         (jr, jc) = tjx `divMod` size
+      in abs (jr - ir) + abs (jc - ic)
 
    hasNoDuplicateTiles _ [] = True
    hasNoDuplicateTiles acc ((_,t):xs)
@@ -262,30 +293,31 @@ costToWin sol Board{size,tiles} =
         else hasNoDuplicateTiles (IS.insert t acc) xs
 
 solve :: String -> Tree (Board, Move, Cost) -> Maybe [Move]
-solve sol init = idaStar where
+solve sol init = map snd <$> idaStar where
 
   idaStar =
-    dfid (bestFirst init) [10,20..]
+    dfid (bestFirst init) 5
       where
         bestFirst (Node b bs) =
           Node b $
             map bestFirst $
               List.sortOn (\(Node (_,_,c) _) -> c) bs
 
-  dfid problem cutoffs
-    = case mapMaybe (\cutoff -> traceShow cutoff $! dfs 0 cutoff [] problem) cutoffs of
-        [] -> Nothing
-        (firstResult:_) -> Just firstResult
+  dfid problem cutoff
+    = case dfs 0 cutoff [] problem of
+        Left c -> {- traceShow ("New cutoff: " ++ show c) $ -} dfid problem c
+        Right r -> Just r
 
   dfs !d cutoff mvs (Node (b,mv,cost) bs)
     | checkEasyWin sol b
-    = Just (mv:mvs)
-    | cost >= cutoff || d >= 50
-    = Nothing
+    = Right ((b,mv):mvs)
+    | cost > cutoff || d >= 50
+    = (if d `mod` 10 == 0 then traceShow d else id) $ Left cost
     | otherwise
-    = case mapMaybe (dfs (d+1) cutoff (mv:mvs)) bs of
-        []  -> Nothing
-        x:_ -> Just x
+    = case partitionEithers $ map (dfs (d+1) cutoff ((b,mv):mvs)) bs of
+        ([], []) -> error $! show ((b,mv):mvs)
+        (ls, []) -> Left $ minimum ls
+        (_, x:_) -> Right x
 
 checkEasyWin :: String -> Board -> Bool
 checkEasyWin word Board{size, tiles} = {-# SCC checkEasyWin #-}
