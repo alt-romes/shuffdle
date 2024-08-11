@@ -154,8 +154,8 @@ main = do
     let w = "REFER"
     -- print $ length $ (levels $ (puzzleSearchSpace (boardFromRows sampleBoard))) !! 10
     -- timeout 100_000_000 $ do
-    -- print $ solve w $ annotateCosts w $ puzzleSearchSpace (boardFromRows sampleBoard)
-    -- exitWith ExitSuccess
+    print $ solve w $ annotateCosts w $ puzzleSearchSpace (boardFromRows sampleBoard)
+    exitWith ExitSuccess
     ls <- lines <$> readFile "wordle-La.txt"
     wordIx <- randomRIO (0, length ls - 1)
     let word = ls !! wordIx
@@ -227,16 +227,7 @@ costToWin sol board@Board{size,tiles} =
        pure @[] (k, (cost, tile))
      guard $ hasNoDuplicateTiles IS.empty $ map snd ls
      pure ls
-   fixedCost =
-     let forcedTilesCost = IM.foldr ((+) . fst . NE.head) 0 singleOpt
-         -- If a hole is adjacent to at least one other hole it's good
-         holesAdjacentCost  = sum
-           [ holeAdjacent
-           | (ix, tile) <- IM.toList tiles
-           , Empty <- [tile]
-           , let holeAdjacent = product $ map (\case Empty -> 0; With _ -> 1) $ map (tiles IM.!) $ map fst $ getAdjacent ix board
-           ]
-      in forcedTilesCost + holesAdjacentCost
+   fixedCost = IM.foldr ((+) . fst . NE.head) 0 singleOpt
    (singleOpt, multiOpt) = IM.partition ((== 1) . NE.length) costMap
    costMap =
     IM.fromListWith (<>)
@@ -248,12 +239,12 @@ costToWin sol board@Board{size,tiles} =
     , let (row_ix, col_ix) = ix `divMod` size
 
     -- Trivial guards
-    , row_ix < 4
+    , row_ix < size
     , With c <- [tile]
 
     , let h = col_ix            -- horiz dist to first col
           v = size - 1 - row_ix -- vert dist to last row
-    , s <- [0..4]               -- col stride into sol
+    , s <- [0..size-1]          -- col stride into sol
 
     -- Value the piece would have in the sol at this stride
     , let vs = toEnum @Char (fromEnum c - h + v + s)
@@ -278,7 +269,9 @@ costToWin sol board@Board{size,tiles} =
     -- Penalise holes far away, we usually need a strip of close-by holes
     , let sparseCost = [manhattanDistance i ix | let holes = IM.toList $ IM.filter (==Empty) tiles, (i,_) <- holes]
 
-    , let cost = (manhattanDistance ix (size*(size-1)+s)) -- + wts -- + (sum sparseCost `div` size)
+    , let holeAdj = if any (== Empty) (map (tiles IM.!) $ map fst $ getAdjacent ix board) then 0 else 1
+
+    , let cost = (manhattanDistance ix (size*(size-1)+s)) -- + holeAdj -- + wts -- + (sum sparseCost `div` size)
     ]
 
    manhattanDistance tix tjx =
@@ -296,7 +289,7 @@ solve :: String -> Tree (Board, Move, Cost) -> Maybe [Move]
 solve sol init = map snd <$> idaStar where
 
   idaStar =
-    dfid (bestFirst init) 5
+    dfid (bestFirst init) 200000000
       where
         bestFirst (Node b bs) =
           Node b $
@@ -305,14 +298,14 @@ solve sol init = map snd <$> idaStar where
 
   dfid problem cutoff
     = case dfs 0 cutoff [] problem of
-        Left c -> {- traceShow ("New cutoff: " ++ show c) $ -} dfid problem c
+        Left c -> traceShow ("New cutoff: " ++ show c) $ dfid problem c
         Right r -> Just r
 
   dfs !d cutoff mvs (Node (b,mv,cost) bs)
     | checkEasyWin sol b
     = Right ((b,mv):mvs)
     | cost > cutoff || d >= 50
-    = (if d `mod` 10 == 0 then traceShow d else id) $ Left cost
+    = traceShow (b,mvs) $ Left cost
     | otherwise
     = case partitionEithers $ map (dfs (d+1) cutoff ((b,mv):mvs)) bs of
         ([], []) -> error $! show ((b,mv):mvs)
