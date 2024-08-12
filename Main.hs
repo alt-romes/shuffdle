@@ -151,11 +151,6 @@ sampleBoard = [
               ]
 
 main = do
-    let w = "REFER"
-    -- print $ length $ (levels $ (puzzleSearchSpace (boardFromRows sampleBoard))) !! 10
-    -- timeout 100_000_000 $ do
-    print $ solve w $ annotateCosts w $ puzzleSearchSpace (boardFromRows sampleBoard)
-    exitWith ExitSuccess
     ls <- lines <$> readFile "wordle-La.txt"
     wordIx <- randomRIO (0, length ls - 1)
     let word = ls !! wordIx
@@ -180,6 +175,10 @@ main = do
     putStrLn $ "hard-board-id:" ++ boardId hard_board
     putStrLn $ "Constructing the hard board took " ++ show hard_nMoves ++ " moves"
     putStrLn $ "Hard solution pos " ++ show hard_pick
+
+    timeout 100_000_000 $ do
+      let sol = solve word $ annotateCosts word $ puzzleSearchSpace board
+      print (sol, length <$> sol)
 
   where
   loop game = do
@@ -269,9 +268,10 @@ costToWin sol board@Board{size,tiles} =
     -- Penalise holes far away, we usually need a strip of close-by holes
     , let sparseCost = [manhattanDistance i ix | let holes = IM.toList $ IM.filter (==Empty) tiles, (i,_) <- holes]
 
-    , let holeAdj = if any (== Empty) (map (tiles IM.!) $ map fst $ getAdjacent ix board) then 0 else 1
+    , let dist = manhattanDistance ix (size*(size-1)+s)
+    , let holeAdj = if dist == 0 || any (== Empty) (map (tiles IM.!) $ map fst $ getAdjacent ix board) then 0 else 1
 
-    , let cost = (manhattanDistance ix (size*(size-1)+s)) -- + holeAdj -- + wts -- + (sum sparseCost `div` size)
+    , let cost = dist -- + holeAdj -- + (sum sparseCost `div` size)
     ]
 
    manhattanDistance tix tjx =
@@ -289,28 +289,32 @@ solve :: String -> Tree (Board, Move, Cost) -> Maybe [Move]
 solve sol init = map snd <$> idaStar where
 
   idaStar =
-    dfid (bestFirst init) 200000000
+    dfid (bestFirst init) 300 {- some average manhattan distance (25) times the average depth, to start near depth 25 instead of 1... -}
       where
         bestFirst (Node b bs) =
           Node b $
             map bestFirst $
               List.sortOn (\(Node (_,_,c) _) -> c) bs
+              -- Add filter of children here and keep dfs unchanged.
+              -- Justify by explaining how there are too many options, so it's
+              -- easy to get into a loop. This guarantees we explore different paths always.
+              -- Also "take" it here.
 
   dfid problem cutoff
     = case dfs 0 cutoff [] problem of
-        Left c -> traceShow ("New cutoff: " ++ show c) $ dfid problem c
+        Left c -> dfid problem (c*2)
         Right r -> Just r
 
   dfs !d cutoff mvs (Node (b,mv,cost) bs)
     | checkEasyWin sol b
     = Right ((b,mv):mvs)
     | cost > cutoff || d >= 50
-    = traceShow (b,mvs) $ Left cost
+    = traceShow d $! Left cost
     | otherwise
-    = case partitionEithers $ map (dfs (d+1) cutoff ((b,mv):mvs)) bs of
-        ([], []) -> error $! show ((b,mv):mvs)
+    = case partitionEithers $ map (dfs (d+1) cutoff ((b,mv):mvs)) $ filter (\(Node (b,_,_) _) -> not (b `elem` (map fst mvs))) (take 3 bs) of
+        (_, x:_) -> traceShow d $ Right x
+        ([], []) -> Left cost
         (ls, []) -> Left $ minimum ls
-        (_, x:_) -> Right x
 
 checkEasyWin :: String -> Board -> Bool
 checkEasyWin word Board{size, tiles} = {-# SCC checkEasyWin #-}
