@@ -23,6 +23,10 @@ import qualified Data.List.NonEmpty as NE
 import Data.Function
 import Data.Either
 
+--------------------------------------------------------------------------------
+-- * Board generation
+--------------------------------------------------------------------------------
+
 move :: Int {- index -} -> Direction -> Board -> Maybe Board
 move ix dir Board{size, tiles} = do
   tgt <- target_ix
@@ -140,54 +144,6 @@ possibleMoves :: Board -> [(Int, Direction)] {-^ a tile that can move and a dire
 possibleMoves b =
   [ (adj, flipDir dirToAdj) | h <- getHoles b, (adj, dirToAdj) <- getAdjacent h b ]
 
-
--- First board I ever solved! Or second. Word=REFER.
-sampleBoard = [
-  [With 'F', With 'U', With 'U', With 'M', With 'F'],
-  [With 'Y', With 'I', With 'M', With 'J', With 'Z'],
-  [With 'E', With 'C', With 'X', With 'S', With 'F'],
-  [With 'Q', With 'R', With 'W', With 'D', With 'M'],
-  [Empty, Empty, Empty, Empty, Empty]
-              ]
-
-main = do
-    ls <- lines <$> readFile "wordle-La.txt"
-    wordIx <- randomRIO (0, length ls - 1)
-    let word = ls !! wordIx
-    putStrLn $ "target-word:" ++ word
-    let tryGenBoard = do
-          -- After 10s kill the generation
-          res <- timeout (10*1000*1000) $ do
-            -- Must be forced otherwise the time will be spent after taking from the MVar!
-            ((!b,!m, !p), g') <- flip runStateGen (generateBoard True word) <$> initStdGen
-            (!hard_b,!hard_m, !hard_p) <- flip runStateGen_ (generateBoard False word) <$> pure g'
-            return ((b,m,p), (hard_b,hard_m,hard_p))
-          case res of
-            Nothing -> do
-              putStrLn "Retrying..."
-              tryGenBoard
-            Just x  -> return x
-    ((board, nMoves, pick), (hard_board, hard_nMoves, hard_pick)) <- tryGenBoard
-    putStrLn $ "board-id:" ++ boardId board
-    putStrLn $ "Constructing the solution took " ++ show nMoves ++ " moves"
-    putStrLn $ "Solution pos " ++ show pick
-
-    putStrLn $ "hard-board-id:" ++ boardId hard_board
-    putStrLn $ "Constructing the hard board took " ++ show hard_nMoves ++ " moves"
-    putStrLn $ "Hard solution pos " ++ show hard_pick
-
-    timeout 100_000_000 $ do
-      let sol = solve word $ annotateCosts word $ puzzleSearchSpace board
-      print (sol, length <$> sol)
-
-  where
-  loop game = do
-    print game
-    inp <- getLine
-    case readMaybe @(Int, Direction) inp of
-      Nothing -> loop game
-      Just (ix, dir) -> loop $ fromMaybe game $ move ix dir game
-
 --------------------------------------------------------------------------------
 -- * Solver
 
@@ -215,8 +171,12 @@ nextBoards b =
 
 costToWin :: String -> Board -> Cost
 costToWin sol board@Board{size,tiles} =
-    fixedCost + minimum varCosts
+  if (IM.size costMap /= 5) then error "bad"
+  else fixedCost + minimum varCosts + costOfNonEmptySolutionSpaces
   where
+   costOfNonEmptySolutionSpaces =
+     sum
+      [ 1 | s <- [0..size-1], let t = tiles IM.! (size*(size-1) + s), t /= Empty && t /= With (sol !! s)]
    varCosts = do
      ls <- map (map snd) varCostsFull
      pure $ foldr ((+) . fst) 0 ls
@@ -246,7 +206,7 @@ costToWin sol board@Board{size,tiles} =
     , s <- [0..size-1]          -- col stride into sol
 
     -- Value the piece would have in the sol at this stride
-    , let vs = toEnum @Char (fromEnum c - h + v + s)
+    , let vs = toEnum @Char (((fromEnum c - fromEnum 'A' - h + v + s) `mod` 26) + fromEnum 'A')
 
     -- Guard is solution
     , vs == sol !! s
@@ -289,7 +249,7 @@ solve :: String -> Tree (Board, Move, Cost) -> Maybe [Move]
 solve sol init = map snd <$> idaStar where
 
   idaStar =
-    dfid (bestFirst init) 300 {- some average manhattan distance (25) times the average depth, to start near depth 25 instead of 1... -}
+    dfid (bestFirst init) 30 {- some average manhattan distance (25) times the average depth, to start near depth 25 instead of 1... -}
       where
         bestFirst (Node b bs) =
           Node b $
@@ -302,14 +262,14 @@ solve sol init = map snd <$> idaStar where
 
   dfid problem cutoff
     = case dfs 0 cutoff [] problem of
-        Left c -> dfid problem (c*2)
+        Left c -> dfid problem (c)
         Right r -> Just r
 
   dfs !d cutoff mvs (Node (b,mv,cost) bs)
     | checkEasyWin sol b
     = Right ((b,mv):mvs)
     | cost > cutoff || d >= 50
-    = traceShow d $! Left cost
+    = traceShow (d) $! Left cost
     | otherwise
     = case partitionEithers $ map (dfs (d+1) cutoff ((b,mv):mvs)) $ filter (\(Node (b,_,_) _) -> not (b `elem` (map fst mvs))) (take 3 bs) of
         (_, x:_) -> traceShow d $ Right x
@@ -420,4 +380,71 @@ instance UniformRange Direction where
 -- * Test
 
 roundTripBoard a = a == (boardToRows . boardFromRows) a
+
+--------------------------------------------------------------------------------
+-- * Main
+--------------------------------------------------------------------------------
+
+-- First board I ever solved! Or second. Word=REFER.
+sampleBoard = [
+  [With 'F', With 'U', With 'U', With 'M', With 'F'],
+  [With 'Y', With 'I', With 'M', With 'J', With 'Z'],
+  [With 'E', With 'C', With 'X', With 'S', With 'F'],
+  [With 'Q', With 'R', With 'W', With 'D', With 'M'],
+  [Empty, Empty, Empty, Empty, Empty]
+              ]
+
+-- Very hard to solve. WOOER
+sampleDifficultBoard = [
+  [With 'D', With 'J', With 'U', With 'C', With 'N'],
+  [With 'Y', With 'R', With 'L', With 'N', With 'X'],
+  [With 'P', With 'Q', With 'N', With 'W', With 'U'],
+  [With 'D', With 'P', With 'E', With 'C', With 'V'],
+  [Empty, Empty, Empty, Empty, Empty]
+              ]
+
+main = do
+    timeout 100_000_000 $ do
+      let sol = solve "REFER" $ annotateCosts "REFER" $ puzzleSearchSpace (boardFromRows sampleBoard)
+      -- let sol = solve "WOOER" $ annotateCosts "WOOER" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
+      print (sol, length <$> sol)
+    exitWith ExitSuccess
+
+    ls <- lines <$> readFile "wordle-La.txt"
+    wordIx <- randomRIO (0, length ls - 1)
+    let word = ls !! wordIx
+    putStrLn $ "target-word:" ++ word
+    let tryGenBoard = do
+          -- After 10s kill the generation
+          res <- timeout (10*1000*1000) $ do
+            -- Must be forced otherwise the time will be spent after taking from the MVar!
+            ((!b,!m, !p), g') <- flip runStateGen (generateBoard True word) <$> initStdGen
+            (!hard_b,!hard_m, !hard_p) <- flip runStateGen_ (generateBoard False word) <$> pure g'
+            return ((b,m,p), (hard_b,hard_m,hard_p))
+          case res of
+            Nothing -> do
+              putStrLn "Retrying..."
+              tryGenBoard
+            Just x  -> return x
+    ((board, nMoves, pick), (hard_board, hard_nMoves, hard_pick)) <- tryGenBoard
+    putStrLn $ "board-id:" ++ boardId board
+    putStrLn $ "Constructing the solution took " ++ show nMoves ++ " moves"
+    putStrLn $ "Solution pos " ++ show pick
+
+    putStrLn $ "hard-board-id:" ++ boardId hard_board
+    putStrLn $ "Constructing the hard board took " ++ show hard_nMoves ++ " moves"
+    putStrLn $ "Hard solution pos " ++ show hard_pick
+
+    
+    -- timeout 100_000_000 $ do
+    --   let sol = solve word $ annotateCosts word $ puzzleSearchSpace board
+    --   print (sol, length <$> sol)
+
+  where
+  loop game = do
+    print game
+    inp <- getLine
+    case readMaybe @(Int, Direction) inp of
+      Nothing -> loop game
+      Just (ix, dir) -> loop $ fromMaybe game $ move ix dir game
 
