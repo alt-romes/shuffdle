@@ -22,6 +22,8 @@ import Data.Tree
 import qualified Data.List.NonEmpty as NE
 import Data.Function
 import Data.Either
+import qualified Data.Vector as V
+import qualified Data.Vector.Mutable as MV
 
 --------------------------------------------------------------------------------
 -- * Board generation
@@ -31,18 +33,18 @@ move :: Int {- index -} -> Direction -> Board -> Maybe Board
 move ix dir Board{size, tiles} = do
   tgt <- target_ix
   guard (target_is_empty tgt)
-  return Board{size, tiles=upd_board tgt}
+  return Board{size, tiles=V.modify (upd_board tgt) tiles}
   where
     col_ix = ix `mod` size
-    upd_board tgt = IM.insert ix Empty $
-                    IM.insert tgt (chLetter <$> (tiles IM.! ix) {- advance to the next letter on every move -})
-                      tiles
+    upd_board tgt tiles' = do
+      MV.write tiles' ix Empty
+      MV.write tiles' tgt (chLetter <$> (tiles V.! ix) {- advance to the next letter on every move -})
     chLetter
       | dir == D || dir == R
       = nextLetter
       | otherwise
       = previousLetter
-    target_is_empty = (== Empty) . (tiles IM.!)
+    target_is_empty = (== Empty) . (tiles V.!)
     target_ix = case dir of
       U -> do
         guard (ix - size >= 0)
@@ -122,7 +124,7 @@ generateBoard easy word gen = do
            let (b',nm') = maybe (b,nm) (,nm+1) $ move ix mov b
            loop make_row_empty b' nm' (extra_moves_count - 1)
 
-  (initialBoard, nMoves) <- loop True Board{size, tiles=solutionBoard} 0 0
+  (initialBoard, nMoves) <- loop True Board{size, tiles=V.fromList $ IM.elems $ solutionBoard} 0 0
 
   return (Board{size, tiles=initialBoard}, nMoves, pick)
 
@@ -172,11 +174,11 @@ nextBoards b =
 costToWin :: String -> Board -> Cost
 costToWin sol board@Board{size,tiles} =
   if (IM.size costMap /= 5) then error "bad"
-  else fixedCost + minimum varCosts + costOfNonEmptySolutionSpaces
+  else fixedCost + minimum varCosts + costOfNonEmptySolutionSpaces -- + sum sparseCost
   where
    costOfNonEmptySolutionSpaces =
      sum
-      [ 1 | s <- [0..size-1], let t = tiles IM.! (size*(size-1) + s), t /= Empty && t /= With (sol !! s)]
+      [ 1 | s <- [0..size-1], let t = tiles V.! (size*(size-1) + s), t /= Empty && t /= With (sol !! s)]
    varCosts = do
      ls <- map (map snd) varCostsFull
      pure $ foldr ((+) . fst) 0 ls
@@ -193,7 +195,7 @@ costToWin sol board@Board{size,tiles} =
     [
       (s, NE.singleton (cost, ix)) -- for stride s, piece ix is solution in m moves
 
-    | (ix,tile) <- IM.toList tiles
+    | (ix,tile) <- [0..] `zip` V.toList tiles
 
     , let (row_ix, col_ix) = ix `divMod` size
 
@@ -217,22 +219,22 @@ costToWin sol board@Board{size,tiles} =
     , let vm = v
 
     -- Direct vertical path to get there
-    , let vpath = [tiles IM.! vti | let tix = ix+(vm*size), vti <- [ix..tix]]
+    , let vpath = [tiles V.! vti | let tix = ix+(vm*size), vti <- [ix..tix]]
     -- The two direct horizontal paths
-    , let hpath1 = [tiles IM.! hti | let tix = ix - h + s, hti <- if tix < ix then [ix,ix-1..tix] else [ix..tix]]
-    , let hpath2 = [tiles IM.! hti | let six = ix+(vm*size), let tix = six - h + s, hti <- if tix < six then [six,six-1..tix] else [six..tix]]
+    , let hpath1 = [tiles V.! hti | let tix = ix - h + s, hti <- if tix < ix then [ix,ix-1..tix] else [ix..tix]]
+    , let hpath2 = [tiles V.! hti | let six = ix+(vm*size), let tix = six - h + s, hti <- if tix < six then [six,six-1..tix] else [six..tix]]
     -- Count as cost non-empty tiles in possible direct paths
     , let countNE = length . filter (/= Empty)
     , let wts = countNE vpath + (countNE hpath1 + countNE hpath2) `div` 2
 
-    -- Penalise holes far away, we usually need a strip of close-by holes
-    , let sparseCost = [manhattanDistance i ix | let holes = IM.toList $ IM.filter (==Empty) tiles, (i,_) <- holes]
-
     , let dist = manhattanDistance ix (size*(size-1)+s)
-    , let holeAdj = if dist == 0 || any (== Empty) (map (tiles IM.!) $ map fst $ getAdjacent ix board) then 0 else 1
+    , let holeAdj = if dist == 0 || any (== Empty) (map (tiles V.!) $ map fst $ getAdjacent ix board) then 0 else 1
 
-    , let cost = dist -- + holeAdj -- + (sum sparseCost `div` size)
+    , let cost = dist + wts -- + holeAdj + wts
     ]
+
+   -- Penalise holes far away, we usually need a strip of close-by holes
+   sparseCost = [manhattanDistance i j | let holes = filter ((==Empty) . snd) $ [0..] `zip` V.toList tiles, (i,_) <- holes, (j,_) <- holes]
 
    manhattanDistance tix tjx =
      let (ir, ic) = tix `divMod` size
@@ -262,7 +264,7 @@ solve sol init = map snd <$> idaStar where
 
   dfid problem cutoff
     = case dfs 0 cutoff [] problem of
-        Left c -> dfid problem (c)
+        Left c -> dfid problem (c*2)
         Right r -> Just r
 
   dfs !d cutoff mvs (Node (b,mv,cost) bs)
@@ -271,14 +273,14 @@ solve sol init = map snd <$> idaStar where
     | cost > cutoff || d >= 50
     = traceShow (d) $! Left cost
     | otherwise
-    = case partitionEithers $ map (dfs (d+1) cutoff ((b,mv):mvs)) $ filter (\(Node (b,_,_) _) -> not (b `elem` (map fst mvs))) (take 3 bs) of
+    = case partitionEithers $ map (dfs (d+1) cutoff ((b,mv):mvs)) $ filter (\(Node (b,_,_) _) -> not (b `elem` (map fst mvs))) (take 2 bs) of
         (_, x:_) -> traceShow d $ Right x
         ([], []) -> Left cost
         (ls, []) -> Left $ minimum ls
 
 checkEasyWin :: String -> Board -> Bool
-checkEasyWin word Board{size, tiles} = {-# SCC checkEasyWin #-}
-  map With word == map (tiles IM.!) ixs
+checkEasyWin word Board{size, tiles} =
+  V.fromList (map With word) == V.slice (size*(size-1)) size tiles
     where
       ixs = [size*(size-1)..size*size-1]
 
@@ -287,7 +289,7 @@ checkEasyWin word Board{size, tiles} = {-# SCC checkEasyWin #-}
 
 data Board = Board
   { size :: Int -- ^ size of one row or column (N)
-  , tiles :: IM.IntMap (Tile Char) -- ^ NxN board
+  , tiles :: V.Vector (Tile Char) -- ^ NxN board
   }
   deriving Eq
 
@@ -296,8 +298,7 @@ data Tile a = Empty | With a deriving (Eq, Functor)
 data Direction = U | R | D | L deriving (Show, Read, Eq, Bounded, Enum)
 
 boardFromRows :: [[Tile Char]] -> Board
-boardFromRows rows = Board row_size $ IM.fromList $ concat $ zipWith go rows [0..] where
-  go row row_ix = zip [row_size*row_ix..] row
+boardFromRows rows = Board row_size $ V.fromList $ concat rows where
   row_size = maybe 0 (length . fst) (List.uncons rows)
 
 boardToRows :: Board -> [[Tile Char]]
@@ -308,21 +309,21 @@ boardToRows Board{size, tiles} = go 0 0 [] [] where
     | col == size
     = go (row+1) 0 (reverse col_acc:row_acc) []
     | otherwise
-    = go row (col+1) row_acc (tiles IM.! (row*size+col) : col_acc)
+    = go row (col+1) row_acc (tiles V.! (row*size+col) : col_acc)
 
 displayBoard :: Board -> String
 displayBoard = List.intercalate "\n" . map (unwords . map show) . boardToRows
 
 boardId :: Board -> String
-boardId Board{tiles} = show $ map snd $ IM.toList tiles
+boardId Board{tiles} = show $ V.toList tiles
 
 rowIsEmpty :: [Int] -> Board -> Bool
 rowIsEmpty ixs Board{size, tiles} =
-  all (==Empty) $ map (tiles IM.!) ixs
+  all (==Empty) $ map (tiles V.!) ixs
 
 -- | Returns the indices of all holes in the board
 getHoles :: Board -> [Int]
-getHoles Board{tiles} = IM.keys $ IM.filter (== Empty) tiles
+getHoles Board{tiles} = map fst . filter ((== Empty) . snd) $ [0..] `zip` V.toList tiles
 
 -- | Down to up, left to right, and vice versa
 flipDir :: Direction -> Direction
@@ -344,7 +345,7 @@ getAdjacent :: Int -> Board -> [(Int, Direction)]
 getAdjacent ix b@Board{size, tiles} = catMaybes $
   flip map
     [(applyDir b ix L, L), (applyDir b ix R, R), (applyDir b ix D, D), (applyDir b ix U, U)] $ \(tgt, d) -> do
-    case IM.lookup tgt tiles of
+    case tiles V.!? tgt of
       Nothing    -> Nothing
       Just Empty -> Nothing
       Just _     -> Just (tgt, d)
@@ -404,11 +405,11 @@ sampleDifficultBoard = [
               ]
 
 main = do
-    timeout 100_000_000 $ do
-      let sol = solve "REFER" $ annotateCosts "REFER" $ puzzleSearchSpace (boardFromRows sampleBoard)
-      -- let sol = solve "WOOER" $ annotateCosts "WOOER" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
-      print (sol, length <$> sol)
-    exitWith ExitSuccess
+    -- timeout 100_000_000 $ do
+    --   -- let sol = solve "REFER" $ annotateCosts "REFER" $ puzzleSearchSpace (boardFromRows sampleBoard)
+    --   let sol = solve "WOOER" $ annotateCosts "WOOER" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
+    --   print (sol, length <$> sol)
+    -- exitWith ExitSuccess
 
     ls <- lines <$> readFile "wordle-La.txt"
     wordIx <- randomRIO (0, length ls - 1)
@@ -436,9 +437,9 @@ main = do
     putStrLn $ "Hard solution pos " ++ show hard_pick
 
     
-    -- timeout 100_000_000 $ do
-    --   let sol = solve word $ annotateCosts word $ puzzleSearchSpace board
-    --   print (sol, length <$> sol)
+    timeout 100_000_000 $ do
+      let sol = solve word $ annotateCosts word $ puzzleSearchSpace board
+      print (sol, length <$> sol)
 
   where
   loop game = do
