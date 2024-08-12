@@ -230,7 +230,7 @@ costToWin sol board@Board{size,tiles} =
     , let dist = manhattanDistance ix (size*(size-1)+s)
     , let holeAdj = if dist == 0 || any (== Empty) (map (tiles V.!) $ map fst $ getAdjacent ix board) then 0 else 1
 
-    , let cost = dist + wts -- + holeAdj + wts
+    , let cost = dist + wts -- + holeAdj -- + wts
     ]
 
    -- Penalise holes far away, we usually need a strip of close-by holes
@@ -251,7 +251,7 @@ solve :: String -> Tree (Board, Move, Cost) -> Maybe [Move]
 solve sol init = map snd <$> idaStar where
 
   idaStar =
-    dfid (bestFirst init) 30 {- some average manhattan distance (25) times the average depth, to start near depth 25 instead of 1... -}
+    dfid (bestFirst init) (30*50) {- Ad-hoc -} {- some average manhattan distance (25) times the average depth, to start near depth 30 instead of 1... -}
       where
         bestFirst (Node b bs) =
           Node b $
@@ -264,11 +264,11 @@ solve sol init = map snd <$> idaStar where
 
   dfid problem cutoff
     = case dfs 0 cutoff [] problem of
-        Left c -> dfid problem (c*2)
+        Left c -> dfid problem (c*3) {- Ad-hoc -}
         Right r -> Just r
 
   dfs !d cutoff mvs (Node (b,mv,cost) bs)
-    | checkEasyWin sol b
+    | checkEasyWin b
     = Right ((b,mv):mvs)
     | cost > cutoff || d >= 50
     = traceShow (d) $! Left cost
@@ -278,11 +278,11 @@ solve sol init = map snd <$> idaStar where
         ([], []) -> Left cost
         (ls, []) -> Left $ minimum ls
 
-checkEasyWin :: String -> Board -> Bool
-checkEasyWin word Board{size, tiles} =
-  V.fromList (map With word) == V.slice (size*(size-1)) size tiles
-    where
-      ixs = [size*(size-1)..size*size-1]
+  checkEasyWin :: Board -> Bool
+  checkEasyWin Board{size, tiles} =
+    V.fromList (map With sol) == V.slice (size*(size-1)) size tiles
+      where
+        ixs = [size*(size-1)..size*size-1]
 
 --------------------------------------------------------------------------------
 -- * Board
@@ -405,8 +405,8 @@ sampleDifficultBoard = [
               ]
 
 main = do
-    -- timeout 100_000_000 $ do
-    --   -- let sol = solve "REFER" $ annotateCosts "REFER" $ puzzleSearchSpace (boardFromRows sampleBoard)
+    -- timeout 20_000_000 $ do
+    -- --   -- let sol = solve "REFER" $ annotateCosts "REFER" $ puzzleSearchSpace (boardFromRows sampleBoard)
     --   let sol = solve "WOOER" $ annotateCosts "WOOER" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
     --   print (sol, length <$> sol)
     -- exitWith ExitSuccess
@@ -437,7 +437,8 @@ main = do
     putStrLn $ "Hard solution pos " ++ show hard_pick
 
     
-    timeout 100_000_000 $ do
+    -- If this times out, try generating another board
+    timeout 30_000_000 $ do
       let sol = solve word $ annotateCosts word $ puzzleSearchSpace board
       print (sol, length <$> sol)
 
