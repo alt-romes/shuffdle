@@ -161,24 +161,32 @@ puzzleSearchSpace board = go (board, NoMove) where
 
 annotateCosts :: String -> Tree (Board, Move) -> Tree (Board, Move, Cost)
 annotateCosts sol = go 0 where
-  go pathCost (Node (b,m) ns) =
-    let h = costToWin sol b
-        g = pathCost
-        f = g + h
+  vsol = V.fromList sol
+  go !pathCost (Node (b,m) ns) =
+    let !h = costToWin vsol b
+        !g = pathCost
+        !f = g + h
      in Node (b, m, f) (map (go f) ns)
 
 nextBoards :: Board -> [(Board, Move)]
 nextBoards b =
   [ (b', Move i d) | (i, d) <- possibleMoves b, Just b' <- [move i d b] ]
 
-costToWin :: String -> Board -> Cost
+costToWin :: V.Vector Char -> Board -> Cost
 costToWin sol board@Board{size,tiles} =
-  if (IM.size costMap /= 5) then error "bad"
-  else fixedCost + minimum varCosts + costOfNonEmptySolutionSpaces -- + sum sparseCost
+  -- if (IM.size costMap /= 5) then error "bad"
+  -- else
+    let !cost = fixedCost + minimum varCosts + costOfNonEmptySolutionSpaces -- + sum sparseCost
+     in cost
   where
    costOfNonEmptySolutionSpaces =
-     sum
-      [ 1 | s <- [0..size-1], let t = tiles V.! (size*(size-1) + s), t /= Empty && t /= With (sol !! s)]
+     V.sum $
+     V.imap (\s t ->
+       if t /= With (sol V.! s) then
+         if t == Empty then 1 else 10
+       else
+         0
+       ) $ V.slice (size*(size-1)) size tiles
    varCosts = do
      ls <- map (map snd) varCostsFull
      pure $ foldr ((+) . fst) 0 ls
@@ -211,7 +219,7 @@ costToWin sol board@Board{size,tiles} =
     , let vs = toEnum @Char (((fromEnum c - fromEnum 'A' - h + v + s) `mod` 26) + fromEnum 'A')
 
     -- Guard is solution
-    , vs == sol !! s
+    , vs == sol V.! s
 
     -- Horizontal moves to get there
     , let hm = abs (h - s)
@@ -225,12 +233,12 @@ costToWin sol board@Board{size,tiles} =
     , let hpath2 = [tiles V.! hti | let six = ix+(vm*size), let tix = six - h + s, hti <- if tix < six then [six,six-1..tix] else [six..tix]]
     -- Count as cost non-empty tiles in possible direct paths
     , let countNE = length . filter (/= Empty)
-    , let wts = countNE vpath + (countNE hpath1 + countNE hpath2) `div` 2
+    , let wts = countNE vpath + (min (countNE hpath1) (countNE hpath2))
 
     , let dist = manhattanDistance ix (size*(size-1)+s)
     , let holeAdj = if dist == 0 || any (== Empty) (map (tiles V.!) $ map fst $ getAdjacent ix board) then 0 else 1
 
-    , let cost = dist + wts -- + holeAdj -- + wts
+    , let cost = dist + wts + holeAdj
     ]
 
    -- Penalise holes far away, we usually need a strip of close-by holes
@@ -251,7 +259,7 @@ solve :: String -> Tree (Board, Move, Cost) -> Maybe [Move]
 solve sol init = map snd <$> idaStar where
 
   idaStar =
-    dfid (bestFirst init) (30*85) {- Ad-hoc -} {- some average manhattan distance (25) times the average depth, to start near depth 30 instead of 1... -}
+    dfid (bestFirst init) (25) {- Ad-hoc -} {- some average manhattan distance (25) times the average depth, to start near depth 30 instead of 1... -}
       where
         bestFirst (Node b bs) =
           Node b $
@@ -264,25 +272,27 @@ solve sol init = map snd <$> idaStar where
 
   dfid problem cutoff
     = case dfs 0 cutoff [] problem of
-        Left c -> dfid problem (c*3) {- Ad-hoc -}
+        Left c -> dfid problem (c) {- Ad-hoc -}
         Right r -> Just r
 
-  dfs !d cutoff mvs (Node (b,mv,cost) bs)
+  dfs d cutoff mvs (Node (b,mv,cost) bs)
     | checkEasyWin b
     = Right ((b,mv):mvs)
-    | cost > cutoff || d >= 50
-    = traceShow (d) $! Left cost
+    | {- cost > cutoff || -} d >= 50
+    = Left cost
     | otherwise
     = case partitionEithers $ map (dfs (d+1) cutoff ((b,mv):mvs)) $ filter (\(Node (b,_,_) _) -> not (b `elem` (map fst mvs))) (take 2 bs) of
-        (_, x:_) -> traceShow d $ Right x
+        (_, x:_) -> Right x
         ([], []) -> Left cost
         (ls, []) -> Left $ minimum ls
 
   checkEasyWin :: Board -> Bool
   checkEasyWin Board{size, tiles} =
-    V.fromList (map With sol) == V.slice (size*(size-1)) size tiles
+    vsol == V.slice (size*(size-1)) size tiles
       where
         ixs = [size*(size-1)..size*size-1]
+
+  vsol = V.map With $ V.fromList sol
 
 --------------------------------------------------------------------------------
 -- * Board
@@ -414,12 +424,12 @@ sampleDifficultBoard2 = [
               ]
 
 main = do
-    -- timeout 60_000_000 $ do
-    -- --   -- let sol = solve "REFER" $ annotateCosts "REFER" $ puzzleSearchSpace (boardFromRows sampleBoard)
-    --   -- let sol = solve "WOOER" $ annotateCosts "WOOER" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
-    --   let sol = solve "GECKO" $ annotateCosts "GECKO" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
-    --   print (sol, length <$> sol)
-    -- exitWith ExitSuccess
+    timeout 60_000_000 $ do
+      -- let sol = solve "REFER" $ annotateCosts "REFER" $ puzzleSearchSpace (boardFromRows sampleBoard)
+      let sol = solve "WOOER" $ annotateCosts "WOOER" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
+      -- let sol = solve "GECKO" $ annotateCosts "GECKO" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
+      print (sol, length <$> sol)
+    exitWith ExitSuccess
 
     ls <- lines <$> readFile "wordle-La.txt"
     wordIx <- randomRIO (0, length ls - 1)
@@ -427,7 +437,7 @@ main = do
     putStrLn $ "target-word:" ++ word
     let tryGenBoard = do
           -- After 10s kill the generation
-          res <- timeout (10*1000*1000) $ do
+          res <- timeout (5*1000*1000) $ do
             -- Must be forced otherwise the time will be spent after taking from the MVar!
             ((!b,!m, !p), g') <- flip runStateGen (generateBoard True word) <$> initStdGen
             (!hard_b,!hard_m, !hard_p) <- flip runStateGen_ (generateBoard False word) <$> pure g'
@@ -450,7 +460,7 @@ main = do
 
     
     -- If this times out, try generating another board
-    timeout 50_000_000 $ do
+    timeout 60_000_000 $ do
       let sol = solve word $ annotateCosts word $ puzzleSearchSpace board
       putStrLn $ "solved: in " ++ show (length <$> sol) ++ " moves with " ++ show sol
 
