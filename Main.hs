@@ -251,7 +251,7 @@ solve :: String -> Tree (Board, Move, Cost) -> Maybe [Move]
 solve sol init = map snd <$> idaStar where
 
   idaStar =
-    dfid (bestFirst init) (30*50) {- Ad-hoc -} {- some average manhattan distance (25) times the average depth, to start near depth 30 instead of 1... -}
+    dfid (bestFirst init) (30*85) {- Ad-hoc -} {- some average manhattan distance (25) times the average depth, to start near depth 30 instead of 1... -}
       where
         bestFirst (Node b bs) =
           Node b $
@@ -404,10 +404,20 @@ sampleDifficultBoard = [
   [Empty, Empty, Empty, Empty, Empty]
               ]
 
+-- GECKO
+sampleDifficultBoard2 = [
+  [With 'L', With 'H', With 'G', With 'C', With 'A'],
+  [With 'Z', With 'N', With 'Y', With 'A', With 'N'],
+  [With 'R', With 'S', With 'G', With 'H', With 'X'],
+  [With 'G', With 'P', With 'H', With 'S', With 'C'],
+  [Empty, Empty, Empty, Empty, Empty]
+              ]
+
 main = do
-    -- timeout 20_000_000 $ do
+    -- timeout 60_000_000 $ do
     -- --   -- let sol = solve "REFER" $ annotateCosts "REFER" $ puzzleSearchSpace (boardFromRows sampleBoard)
-    --   let sol = solve "WOOER" $ annotateCosts "WOOER" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
+    --   -- let sol = solve "WOOER" $ annotateCosts "WOOER" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
+    --   let sol = solve "GECKO" $ annotateCosts "GECKO" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
     --   print (sol, length <$> sol)
     -- exitWith ExitSuccess
 
@@ -436,11 +446,13 @@ main = do
     putStrLn $ "Constructing the hard board took " ++ show hard_nMoves ++ " moves"
     putStrLn $ "Hard solution pos " ++ show hard_pick
 
+    putStrLn $ "Cost to win " ++ show hard_pick
+
     
     -- If this times out, try generating another board
-    timeout 30_000_000 $ do
+    timeout 50_000_000 $ do
       let sol = solve word $ annotateCosts word $ puzzleSearchSpace board
-      print (sol, length <$> sol)
+      putStrLn $ "solved: in " ++ show (length <$> sol) ++ " moves with " ++ show sol
 
   where
   loop game = do
