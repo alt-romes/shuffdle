@@ -44,9 +44,9 @@
                 <a id="restart-qm" onclick="location.reload(); return false;" class="small-option">restart?</a>
             </div>
             <script>
-                const the_board_id = ['R','U','Q','J','M','I','Z','P','N','S','H','H','T','M','T','I','G','S','S','X','_','_','_','_','_']
-                const the_hard_board_id = ['_','_','I','O','X','K','A','R','Q','S','S','_','S','Y','S','D','Q','_','R','_','U','G','O','Y','T']
-                const the_word_goal = "BROOM"
+                const the_board_id = ['I','C','V','K','T','Z','L','H','N','J','M','I','H','M','K','Y','G','X','H','C','_','_','_','_','_']
+                const the_hard_board_id = ['I','O','V','P','_','W','_','H','Y','B','D','Q','_','O','_','D','C','C','J','O','L','W','C','_','A']
+                const the_word_goal = "LIPID"
                 document.getElementById("solution").innerHTML = the_word_goal
                 const container = document.getElementById("board-container")
                 for (x of (hardcoreMode ? the_hard_board_id : the_board_id)) {
