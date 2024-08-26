@@ -95,6 +95,20 @@ const playAnim = (e, a) => {
     void e.offsetWidth // Trigger reflow
     e.classList.add(a)
 }
+const reportWin = () => {
+    const now = new Date();
+    const datePath = now.getDate() + "-" + (now.getMonth()+1) + "-" + now.getFullYear()
+    plausible('pageview', { u: "https://www.shuffdle.com/win/" + (hardcoreMode ? "hard/" : "") + solution + "/" + datePath + "/" + getMoves() + "-moves" })
+
+    fetch("https://win.shuffdle.com/integrationm/concurrent/SHUFDLE_create_win", {
+        method: "POST",
+        body: JSON.stringify({
+            username: "Q29zbWljQ2VyZWFs",
+            word: solution,
+            mode: hardcoreMode? "Hard" : "Normal",
+            moves: getMoves(), time: 0, restarts: 0 })
+    });
+}
 const checkWin = () => {
     /* This function doesn't need to handle the easy case because it will check only all tiles that have the defaultCorrectness
      * In hardest mode, the correctness will be "possibly-correct", and we'll traverse all of those.
@@ -173,9 +187,7 @@ const checkWin = () => {
     showWin()
 
     // Report win
-    const now = new Date();
-    const datePath = now.getDate() + "-" + (now.getMonth()+1) + "-" + now.getFullYear()
-    plausible('pageview', { u: "https://www.shuffdle.com/win/" + (hardcoreMode ? "hard/" : "") + solution + "/" + datePath + "/" + getMoves() + "-moves" })
+    reportWin()
 }
 const showWin = () => {
     [...document.querySelectorAll("main .tile[correct=\"true\"]")].map(e => {
