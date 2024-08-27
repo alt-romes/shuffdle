@@ -44,9 +44,9 @@
                 <a id="restart-qm" onclick="location.reload(); return false;" class="small-option">restart?</a>
             </div>
             <script>
-                const the_board_id = ['I','C','V','K','T','Z','L','H','N','J','M','I','H','M','K','Y','G','X','H','C','_','_','_','_','_']
-                const the_hard_board_id = ['I','O','V','P','_','W','_','H','Y','B','D','Q','_','O','_','D','C','C','J','O','L','W','C','_','A']
-                const the_word_goal = "LIPID"
+                const the_board_id = ['H','V','S','O','S','D','Q','T','A','F','W','F','G','L','X','R','H','E','A','S','_','_','_','_','_']
+                const the_hard_board_id = ['P','S','_','_','_','Y','U','Q','_','D','I','C','X','J','_','D','L','I','C','J','T','S','R','L','U']
+                const the_word_goal = "SHAKE"
                 document.getElementById("solution").innerHTML = the_word_goal
                 const container = document.getElementById("board-container")
                 for (x of (hardcoreMode ? the_hard_board_id : the_board_id)) {
