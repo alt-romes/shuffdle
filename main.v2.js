@@ -102,11 +102,14 @@ const reportWin = () => {
 
     fetch("https://win.shuffdle.com/integrationm/concurrent/SHUFDLE_create_win", {
         method: "POST",
-        body: JSON.stringify({
+        headers: {
+          "Content-Type": `application/x-www-form-urlencoded`,
+        },
+        body: new URLSearchParams({
             username: "Q29zbWljQ2VyZWFs",
             word: solution,
             mode: hardcoreMode? "Hard" : "Normal",
-            moves: getMoves(), time: 0, restarts: 0 })
+            moves: getMoves(), time: 0, restarts: 0 }).toString()
     });
 }
 const checkWin = () => {
