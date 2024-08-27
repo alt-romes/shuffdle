@@ -100,16 +100,26 @@ const reportWin = () => {
     const datePath = now.getDate() + "-" + (now.getMonth()+1) + "-" + now.getFullYear()
     plausible('pageview', { u: "https://www.shuffdle.com/win/" + (hardcoreMode ? "hard/" : "") + solution + "/" + datePath + "/" + getMoves() + "-moves" })
 
+    let data =
+            { word: solution,
+              mode: hardcoreMode? "Hard" : "Normal",
+              moves: getMoves(), time: 0, restarts: 0 }
+
+    // Get winscreen username if visiting again
+    const existUser = localStorage.getItem("shuffdle-username")
+    if (!!existUser) // User exists
+        data["username"] = existUser
+
     fetch("https://win.shuffdle.com/integrationm/concurrent/SHUFDLE_create_win", {
         method: "POST",
         headers: {
           "Content-Type": `application/x-www-form-urlencoded`,
         },
-        body: new URLSearchParams({
-            username: "Q29zbWljQ2VyZWFs",
-            word: solution,
-            mode: hardcoreMode? "Hard" : "Normal",
-            moves: getMoves(), time: 0, restarts: 0 }).toString()
+        body: new URLSearchParams(data).toString()
+    }).then(r => {
+        console.log(r)
+        if (!existUser)
+            localStorage.setItem("shuffdle-visited", r.body)
     });
 }
 const checkWin = () => {
