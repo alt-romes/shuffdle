@@ -159,11 +159,11 @@ puzzleSearchSpace :: Board -> Tree (Board, Move)
 puzzleSearchSpace board = go (board, NoMove) where
   go (b,m) = Node (b, m) (map go $ nextBoards b)
 
-annotateCosts :: String -> Tree (Board, Move) -> Tree (Board, Move, Cost)
-annotateCosts sol = go 0 where
+annotateCosts :: String -> Int {- Solution row -} -> Tree (Board, Move) -> Tree (Board, Move, Cost)
+annotateCosts sol solrow = go 0 where
   vsol = V.fromList sol
   go !pathCost (Node (b,m) ns) =
-    let !h = costToWin vsol b
+    let !h = costToWin vsol solrow b
         !g = pathCost
         !f = g + h
      in Node (b, m, f) (map (go f) ns)
@@ -172,9 +172,9 @@ nextBoards :: Board -> [(Board, Move)]
 nextBoards b =
   [ (b', Move i d) | (i, d) <- possibleMoves b, Just b' <- [move i d b] ]
 
-costToWin :: V.Vector Char -> Board -> Cost
-costToWin sol board@Board{size,tiles} =
-  -- if (IM.size costMap /= 5) then error "bad"
+costToWin :: V.Vector Char -> Int {- sol row -} -> Board -> Cost
+costToWin !sol !solrow board@Board{size,tiles} =
+  -- if (IM.size costMap /= 5) then error ("not a solution: " ++ show sol ++ "/" ++ show solrow)
   -- else
     let !cost = fixedCost + minimum varCosts + costOfNonEmptySolutionSpaces -- + sum sparseCost
      in cost
@@ -186,10 +186,10 @@ costToWin sol board@Board{size,tiles} =
          if t == Empty then 1 else 10
        else
          0
-       ) $ V.slice (size*(size-1)) size tiles
+       ) $ V.slice (size*solrow) size tiles
    varCosts = do
      ls <- map (map snd) varCostsFull
-     pure $ foldr ((+) . fst) 0 ls
+     pure $ foldl' (flip $ (+) . fst) 0 ls
    varCostsFull = do
      ls <- forM (IM.toList multiOpt) $ \(k, vars) -> do
        (cost, tile) <- NE.toList vars
@@ -212,7 +212,7 @@ costToWin sol board@Board{size,tiles} =
     , With c <- [tile]
 
     , let h = col_ix            -- horiz dist to first col
-          v = size - 1 - row_ix -- vert dist to last row
+          v = solrow - row_ix   -- vert dist to sol row (may be negative)
     , s <- [0..size-1]          -- col stride into sol
 
     -- Value the piece would have in the sol at this stride
@@ -223,11 +223,11 @@ costToWin sol board@Board{size,tiles} =
 
     -- Horizontal moves to get there
     , let hm = abs (h - s)
-    -- Vertical moves
+    -- Vertical moves (may be negative if solution is not in bottom row)
     , let vm = v
 
     -- Direct vertical path to get there
-    , let vpath = [tiles V.! vti | let tix = ix+(vm*size), vti <- [ix..tix]]
+    , let vpath = [tiles V.! vti | let tix = ix+(vm*size), vti <- if tix >= ix then [ix..tix] else [ix,ix-1..tix]]
     -- The two direct horizontal paths
     , let hpath1 = [tiles V.! hti | let tix = ix - h + s, hti <- if tix < ix then [ix,ix-1..tix] else [ix..tix]]
     , let hpath2 = [tiles V.! hti | let six = ix+(vm*size), let tix = six - h + s, hti <- if tix < six then [six,six-1..tix] else [six..tix]]
@@ -235,10 +235,10 @@ costToWin sol board@Board{size,tiles} =
     , let countNE = length . filter (/= Empty)
     , let wts = countNE vpath + (min (countNE hpath1) (countNE hpath2))
 
-    , let dist = manhattanDistance ix (size*(size-1)+s)
+    , let dist = manhattanDistance ix (size*solrow+s)
     , let holeAdj = if dist == 0 || any (== Empty) (map (tiles V.!) $ map fst $ getAdjacent ix board) then 0 else 1
 
-    , let cost = dist + wts + holeAdj
+    , let cost = dist + wts -- + holeAdj
     ]
 
    -- Penalise holes far away, we usually need a strip of close-by holes
@@ -255,8 +255,9 @@ costToWin sol board@Board{size,tiles} =
         then False
         else hasNoDuplicateTiles (IS.insert t acc) xs
 
-solve :: String -> Tree (Board, Move, Cost) -> Maybe [Move]
-solve sol init = map snd <$> idaStar where
+solve :: String -> Int {-^ row where solution is -}
+      -> Tree (Board, Move, Cost) -> Maybe [Move]
+solve sol solrow init = map snd <$> idaStar where
 
   idaStar =
     dfid (bestFirst init) (25) {- Ad-hoc -} {- some average manhattan distance (25) times the average depth, to start near depth 30 instead of 1... -}
@@ -272,13 +273,13 @@ solve sol init = map snd <$> idaStar where
 
   dfid problem cutoff
     = case dfs 0 cutoff [] problem of
-        Left c -> dfid problem (c) {- Ad-hoc -}
+        Left c -> {- traceShow cutoff $ -} dfid problem (c) {- Ad-hoc -}
         Right r -> Just r
 
   dfs d cutoff mvs (Node (b,mv,cost) bs)
     | checkEasyWin b
     = Right ((b,mv):mvs)
-    | {- cost > cutoff || -} d >= 50
+    | cost > cutoff || d >= 50
     = Left cost
     | otherwise
     = case partitionEithers $ map (dfs (d+1) cutoff ((b,mv):mvs)) $ filter (\(Node (b,_,_) _) -> not (b `elem` (map fst mvs))) (take 2 bs) of
@@ -288,9 +289,7 @@ solve sol init = map snd <$> idaStar where
 
   checkEasyWin :: Board -> Bool
   checkEasyWin Board{size, tiles} =
-    vsol == V.slice (size*(size-1)) size tiles
-      where
-        ixs = [size*(size-1)..size*size-1]
+    vsol == V.slice (size*solrow) size tiles
 
   vsol = V.map With $ V.fromList sol
 
@@ -423,11 +422,21 @@ sampleDifficultBoard2 = [
   [Empty, Empty, Empty, Empty, Empty]
               ]
 
+-- BROOM unsolvable? hard mode
+sampleDifficultBoard3 = [
+  [Empty, Empty, With 'I', With 'O', With 'X'],
+  [With 'K', With 'A', With 'R', With 'Q', With 'S'],
+  [With 'S', Empty, With 'S', With 'Y', With 'S'],
+  [With 'D', With 'Q', Empty, With 'R', Empty],
+  [With 'U', With 'G', With 'O', With 'Y', With 'T']
+              ]
+
 main = do
     timeout 60_000_000 $ do
-      -- let sol = solve "REFER" $ annotateCosts "REFER" $ puzzleSearchSpace (boardFromRows sampleBoard)
-      let sol = solve "WOOER" $ annotateCosts "WOOER" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
-      -- let sol = solve "GECKO" $ annotateCosts "GECKO" $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
+      -- let sol = solve "REFER" 4 $ annotateCosts "REFER" 4 $ puzzleSearchSpace (boardFromRows sampleBoard)
+      -- let sol = solve "WOOER" 4 $ annotateCosts "WOOER" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
+      -- let sol = solve "GECKO" 4 $ annotateCosts "GECKO" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
+      let sol = solve "BROOM" 0 $ annotateCosts "BROOM" 0 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard3)
       print (sol, length <$> sol)
     exitWith ExitSuccess
 
@@ -461,7 +470,7 @@ main = do
     
     -- If this times out, try generating another board
     timeout 60_000_000 $ do
-      let sol = solve word $ annotateCosts word $ puzzleSearchSpace board
+      let sol = solve word (length word - 1) $ annotateCosts word (length word - 1) $ puzzleSearchSpace board
       putStrLn $ "solved: in " ++ show (length <$> sol) ++ " moves with " ++ show sol
 
   where
