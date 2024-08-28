@@ -422,7 +422,7 @@ sampleDifficultBoard2 = [
   [Empty, Empty, Empty, Empty, Empty]
               ]
 
--- BROOM unsolvable? hard mode
+-- BROOM hard mode
 sampleDifficultBoard3 = [
   [Empty, Empty, With 'I', With 'O', With 'X'],
   [With 'K', With 'A', With 'R', With 'Q', With 'S'],
