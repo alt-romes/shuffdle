@@ -116,9 +116,9 @@ const reportWin = () => {
           "Content-Type": `application/x-www-form-urlencoded`,
         },
         body: new URLSearchParams(data).toString()
-    }).then(r => {
+    }).then(r => r.json()).then(d => {
         // Always set username (makes sure to update storage even if something invalid during development got written there)
-        localStorage.setItem("shuffdle-visited", window.btoa(r.body.results[0]["Username"]))
+        localStorage.setItem("shuffdle-visited", window.btoa(d.results[0]["Username"]))
     });
 }
 const checkWin = () => {
