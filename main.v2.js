@@ -110,16 +110,15 @@ const reportWin = () => {
     if (!!existUser) // User exists
         data["username"] = existUser
 
-    fetch("https://win.shuffdle.com/integrationm/concurrent/SHUFDLE_create_win", {
+    return fetch("https://win.shuffdle.com/integrationm/concurrent/SHUFDLE_create_win", {
         method: "POST",
         headers: {
           "Content-Type": `application/x-www-form-urlencoded`,
         },
         body: new URLSearchParams(data).toString()
     }).then(r => {
-        console.log(r)
-        if (!existUser)
-            localStorage.setItem("shuffdle-visited", r.body)
+        // Always set username (makes sure to update storage even if something invalid during development got written there)
+        localStorage.setItem("shuffdle-visited", window.btoa(r.body.results[0]["Username"]))
     });
 }
 const checkWin = () => {
