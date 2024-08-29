@@ -118,7 +118,7 @@ const reportWin = () => {
         body: new URLSearchParams(data).toString()
     }).then(r => r.json()).then(d => {
         // Always set username (makes sure to update storage even if something invalid during development got written there)
-        localStorage.setItem("shuffdle-visited", window.btoa(d.results[0]["Username"]))
+        localStorage.setItem("shuffdle-username", window.btoa(d.results[0]["Username"]))
     });
 }
 const checkWin = () => {
