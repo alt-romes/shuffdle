@@ -44,9 +44,9 @@
                 <a id="restart-qm" onclick="location.reload(); return false;" class="small-option">restart?</a>
             </div>
             <script>
-                const the_board_id = ['H','E','P','N','P','P','K','X','Y','X','U','N','X','A','J','O','D','P','Z','P','_','_','_','_','_']
-                const the_hard_board_id = ['D','J','M','_','O','_','O','I','Z','Q','W','L','Y','M','F','D','_','_','_','C','B','I','J','T','Z']
-                const the_word_goal = "LEAST"
+                const the_board_id = ['V','V','U','A','W','U','B','V','O','H','A','N','Z','D','G','F','Y','E','L','F','_','_','_','_','_']
+                const the_hard_board_id = ['W','M','N','N','_','B','Z','B','A','W','I','_','Z','D','B','G','C','V','B','_','P','Y','Z','_','_']
+                const the_word_goal = "WEIRD"
                 document.getElementById("solution").innerHTML = the_word_goal
                 const container = document.getElementById("board-container")
                 for (x of (hardcoreMode ? the_hard_board_id : the_board_id)) {
