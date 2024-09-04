@@ -44,9 +44,9 @@
                 <a id="restart-qm" onclick="location.reload(); return false;" class="small-option">restart?</a>
             </div>
             <script>
-                const the_board_id = ['R','Q','T','Y','D','V','Y','C','X','T','G','E','K','M','I','C','N','E','F','F','_','_','_','_','_']
-                const the_hard_board_id = ['_','M','D','F','_','F','_','H','V','V','_','T','A','C','S','U','O','N','_','Q','G','I','S','J','F']
-                const the_word_goal = "DOUGH"
+                const the_board_id = ['U','B','R','W','O','B','C','L','S','A','M','E','M','X','K','C','O','Q','X','M','_','_','_','_','_']
+                const the_hard_board_id = ['I','Z','W','J','I','_','A','V','Y','T','P','V','_','F','D','_','O','Q','D','K','X','U','_','_','B']
+                const the_word_goal = "SPASM"
                 document.getElementById("solution").innerHTML = the_word_goal
                 const container = document.getElementById("board-container")
                 for (x of (hardcoreMode ? the_hard_board_id : the_board_id)) {
