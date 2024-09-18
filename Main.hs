@@ -432,13 +432,13 @@ sampleDifficultBoard3 = [
               ]
 
 main = do
-    timeout 60_000_000 $ do
-      -- let sol = solve "REFER" 4 $ annotateCosts "REFER" 4 $ puzzleSearchSpace (boardFromRows sampleBoard)
-      -- let sol = solve "WOOER" 4 $ annotateCosts "WOOER" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
-      -- let sol = solve "GECKO" 4 $ annotateCosts "GECKO" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
-      let sol = solve "BROOM" 0 $ annotateCosts "BROOM" 0 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard3)
-      print (sol, length <$> sol)
-    exitWith ExitSuccess
+    -- timeout 60_000_000 $ do
+    --   -- let sol = solve "REFER" 4 $ annotateCosts "REFER" 4 $ puzzleSearchSpace (boardFromRows sampleBoard)
+    --   -- let sol = solve "WOOER" 4 $ annotateCosts "WOOER" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
+    --   -- let sol = solve "GECKO" 4 $ annotateCosts "GECKO" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
+    --   let sol = solve "BROOM" 0 $ annotateCosts "BROOM" 0 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard3)
+    --   print (sol, length <$> sol)
+    -- exitWith ExitSuccess
 
     ls <- lines <$> readFile "wordle-La.txt"
     wordIx <- randomRIO (0, length ls - 1)
