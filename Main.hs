@@ -172,27 +172,30 @@ annotateCosts sol solrow = go 0 where
     let !h = costToWin vsol solrow b
         !g = pathCost
         !f = g + h
-     in Node (b, m, f) (map (go f) ns)
+     in Node (b, m, g + h*2 {- adhoc, should be f -}) (map (go f) ns)
 
 solve :: String -> Int {-^ row where solution is -}
       -> Tree (Board, Move, Cost) -> Maybe [Move]
 solve sol solrow init = map snd <$> idaStar where
 
   idaStar =
-    dfid (bestFirst init) (25) {- Ad-hoc -} {- some average manhattan distance (25) times the average depth, to start near depth 30 instead of 1... -}
+    dfid (simplify $ bestFirst init) (25*10) {- Ad-hoc -} {- some average manhattan distance (25) times the average depth, to start near depth 30 instead of 1... -}
       where
         bestFirst (Node b bs) =
           Node b $
             map bestFirst $
               List.sortOn (\(Node (_,_,c) _) -> c) bs
-              -- Add filter of children here and keep dfs unchanged.
-              -- Justify by explaining how there are too many options, so it's
-              -- easy to get into a loop. This guarantees we explore different paths always.
-              -- Also "take" it here.
+
+        -- Only simplify AFTER sorting by best
+        simplify (Node b bs) =
+          Node b $
+            map simplify $
+              take 2 bs -- really hard to solve if taking 3
 
   dfid problem cutoff
     = case dfs 0 cutoff [] problem of
-        Left c -> {- traceShow cutoff $ -} dfid problem (c) {- Ad-hoc -}
+        Left c -> traceShow cutoff $
+          dfid problem c
         Right r -> Just r
 
   dfs d cutoff mvs (Node (b,mv,cost) bs)
@@ -201,7 +204,11 @@ solve sol solrow init = map snd <$> idaStar where
     | cost > cutoff || d >= 50
     = Left cost
     | otherwise
-    = case partitionEithers $ map (dfs (d+1) cutoff ((b,mv):mvs)) $ filter (\(Node (b,_,_) _) -> not (b `elem` (map fst mvs))) (take 2 bs) of
+    = case partitionEithers $
+            map (dfs (d+1) cutoff ((b,mv):mvs)) $
+            -- {- unclear if the cost of filtering is larger than the cost of exploring repeatedly which shouldn't happen that often anyway -}
+            -- filter (\(Node (b,_,_) _) -> not (b `elem` (map fst mvs)))
+            bs of
         (_, x:_) -> Right x
         ([], []) -> Left cost
         (ls, []) -> Left $ minimum ls
@@ -224,7 +231,8 @@ costToWin !sol !solrow board@Board{size,tiles} =
      V.sum $
      V.imap (\s t ->
        if t /= With (sol V.! s) then
-         if t == Empty then 1 else 10
+         -- 1
+         if t == Empty then 1 else 1
        else
          0
        ) $ V.slice (size*solrow) size tiles
@@ -279,7 +287,10 @@ costToWin !sol !solrow board@Board{size,tiles} =
     , let dist = manhattanDistance ix (size*solrow+s)
     , let holeAdj = if dist == 0 || any (== Empty) (map (tiles V.!) $ map fst $ getAdjacent ix board) then 0 else 1
 
-    , let cost = dist + wts -- + holeAdj
+    , let cost
+            | dist == 0 = 0
+            | otherwise = (dist*5) + wts + holeAdj
+      {- doing *5 is kind of critical... the balance in the heuristic factors is crucial -}
     ]
 
    -- Penalise holes far away, we usually need a strip of close-by holes
@@ -454,11 +465,13 @@ sampleBoard4 = [
 
 main = do
     timeout 60_000_000 $ do
+      -- Around 20 moves. Easy to solve...
       -- let sol = solve "REFER" 4 $ annotateCosts "REFER" 4 $ puzzleSearchSpace (boardFromRows sampleBoard)
+      -- let sol = solve "CHORD" 4 $ annotateCosts "CHORD" 4 $ puzzleSearchSpace (boardFromRows sampleBoard4)
+      -- Around 40 moves. Pretty hard...
       -- let sol = solve "WOOER" 4 $ annotateCosts "WOOER" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
-      -- let sol = solve "GECKO" 4 $ annotateCosts "GECKO" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
+      let sol = solve "GECKO" 4 $ annotateCosts "GECKO" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
       -- let sol = solve "BROOM" 0 $ annotateCosts "BROOM" 0 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard3)
-      let sol = solve "CHORD" 4 $ annotateCosts "CHORD" 4 $ puzzleSearchSpace (boardFromRows sampleBoard4)
       print (sol, length <$> sol)
     exitWith ExitSuccess
 
