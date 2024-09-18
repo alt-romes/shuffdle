@@ -25,10 +25,6 @@ import Data.Either
 import qualified Data.Vector as V
 import qualified Data.Vector.Mutable as MV
 
---------------------------------------------------------------------------------
--- * Board generation
---------------------------------------------------------------------------------
-
 move :: Int {- index -} -> Direction -> Board -> Maybe Board
 move ix dir Board{size, tiles} = do
   tgt <- target_ix
@@ -58,6 +54,10 @@ move ix dir Board{size, tiles} = do
       L -> do
         guard (col_ix - 1 >= 0)
         return (ix - 1)
+
+--------------------------------------------------------------------------------
+-- * Board generation {{{
+--------------------------------------------------------------------------------
 
 untilM :: Monad m => (a -> Bool) -> m a -> m a
 untilM p a = do
@@ -146,8 +146,10 @@ possibleMoves :: Board -> [(Int, Direction)] {-^ a tile that can move and a dire
 possibleMoves b =
   [ (adj, flipDir dirToAdj) | h <- getHoles b, (adj, dirToAdj) <- getAdjacent h b ]
 
+-- }}}
 --------------------------------------------------------------------------------
--- * Solver
+-- * Solver {{{
+--------------------------------------------------------------------------------
 
 data Move = Move Int Direction
           | NoMove -- ^ For the starting board
@@ -159,6 +161,10 @@ puzzleSearchSpace :: Board -> Tree (Board, Move)
 puzzleSearchSpace board = go (board, NoMove) where
   go (b,m) = Node (b, m) (map go $ nextBoards b)
 
+nextBoards :: Board -> [(Board, Move)]
+nextBoards b =
+  [ (b', Move i d) | (i, d) <- possibleMoves b, Just b' <- [move i d b] ]
+
 annotateCosts :: String -> Int {- Solution row -} -> Tree (Board, Move) -> Tree (Board, Move, Cost)
 annotateCosts sol solrow = go 0 where
   vsol = V.fromList sol
@@ -168,11 +174,46 @@ annotateCosts sol solrow = go 0 where
         !f = g + h
      in Node (b, m, f) (map (go f) ns)
 
-nextBoards :: Board -> [(Board, Move)]
-nextBoards b =
-  [ (b', Move i d) | (i, d) <- possibleMoves b, Just b' <- [move i d b] ]
+solve :: String -> Int {-^ row where solution is -}
+      -> Tree (Board, Move, Cost) -> Maybe [Move]
+solve sol solrow init = map snd <$> idaStar where
+
+  idaStar =
+    dfid (bestFirst init) (25) {- Ad-hoc -} {- some average manhattan distance (25) times the average depth, to start near depth 30 instead of 1... -}
+      where
+        bestFirst (Node b bs) =
+          Node b $
+            map bestFirst $
+              List.sortOn (\(Node (_,_,c) _) -> c) bs
+              -- Add filter of children here and keep dfs unchanged.
+              -- Justify by explaining how there are too many options, so it's
+              -- easy to get into a loop. This guarantees we explore different paths always.
+              -- Also "take" it here.
+
+  dfid problem cutoff
+    = case dfs 0 cutoff [] problem of
+        Left c -> {- traceShow cutoff $ -} dfid problem (c) {- Ad-hoc -}
+        Right r -> Just r
+
+  dfs d cutoff mvs (Node (b,mv,cost) bs)
+    | checkEasyWin b
+    = Right ((b,mv):mvs)
+    | cost > cutoff || d >= 50
+    = Left cost
+    | otherwise
+    = case partitionEithers $ map (dfs (d+1) cutoff ((b,mv):mvs)) $ filter (\(Node (b,_,_) _) -> not (b `elem` (map fst mvs))) (take 2 bs) of
+        (_, x:_) -> Right x
+        ([], []) -> Left cost
+        (ls, []) -> Left $ minimum ls
+
+  checkEasyWin :: Board -> Bool
+  checkEasyWin Board{size, tiles} =
+    vsol == V.slice (size*solrow) size tiles
+
+  vsol = V.map With $ V.fromList sol
 
 costToWin :: V.Vector Char -> Int {- sol row -} -> Board -> Cost
+-- {{{
 costToWin !sol !solrow board@Board{size,tiles} =
   -- if (IM.size costMap /= 5) then error ("not a solution: " ++ show sol ++ "/" ++ show solrow)
   -- else
@@ -254,47 +295,12 @@ costToWin !sol !solrow board@Board{size,tiles} =
      = if IS.member t acc
         then False
         else hasNoDuplicateTiles (IS.insert t acc) xs
+-- }}}
 
-solve :: String -> Int {-^ row where solution is -}
-      -> Tree (Board, Move, Cost) -> Maybe [Move]
-solve sol solrow init = map snd <$> idaStar where
-
-  idaStar =
-    dfid (bestFirst init) (25) {- Ad-hoc -} {- some average manhattan distance (25) times the average depth, to start near depth 30 instead of 1... -}
-      where
-        bestFirst (Node b bs) =
-          Node b $
-            map bestFirst $
-              List.sortOn (\(Node (_,_,c) _) -> c) bs
-              -- Add filter of children here and keep dfs unchanged.
-              -- Justify by explaining how there are too many options, so it's
-              -- easy to get into a loop. This guarantees we explore different paths always.
-              -- Also "take" it here.
-
-  dfid problem cutoff
-    = case dfs 0 cutoff [] problem of
-        Left c -> {- traceShow cutoff $ -} dfid problem (c) {- Ad-hoc -}
-        Right r -> Just r
-
-  dfs d cutoff mvs (Node (b,mv,cost) bs)
-    | checkEasyWin b
-    = Right ((b,mv):mvs)
-    | cost > cutoff || d >= 50
-    = Left cost
-    | otherwise
-    = case partitionEithers $ map (dfs (d+1) cutoff ((b,mv):mvs)) $ filter (\(Node (b,_,_) _) -> not (b `elem` (map fst mvs))) (take 2 bs) of
-        (_, x:_) -> Right x
-        ([], []) -> Left cost
-        (ls, []) -> Left $ minimum ls
-
-  checkEasyWin :: Board -> Bool
-  checkEasyWin Board{size, tiles} =
-    vsol == V.slice (size*solrow) size tiles
-
-  vsol = V.map With $ V.fromList sol
-
+-- }}}
 --------------------------------------------------------------------------------
 -- * Board
+--------------------------------------------------------------------------------
 
 data Board = Board
   { size :: Int -- ^ size of one row or column (N)
@@ -341,7 +347,7 @@ flipDir D = U
 flipDir R = L
 flipDir L = R
 
--- | Where do we go if we follow this direction?
+-- | Where to go if we follow this direction?
 applyDir :: Board -> Int -> Direction -> Int
 applyDir Board{size} i U = i - size
 applyDir Board{size} i D = i + size
@@ -360,21 +366,24 @@ getAdjacent ix b@Board{size, tiles} = catMaybes $
       Just _     -> Just (tgt, d)
 
 --------------------------------------------------------------------------------
--- * Utils
+-- * Utils {{{
+--------------------------------------------------------------------------------
 
--- | Advance a character to the next alphabet letter (e.g. A -> B, D -> E)
+-- | Advance a character to the next alphabet letter (e.g. A -> B, D -> E, Z -> A)
 nextLetter :: Char -> Char
 nextLetter c =
   if succ c > 'Z' then 'A'
                   else succ c
-
+-- | Change a character to the previous alphabet letter (e.g. B -> A, E -> D, A -> Z)
 previousLetter :: Char -> Char
 previousLetter c =
   if pred c < 'A' then 'Z'
                   else pred c
 
+-- }}}
 --------------------------------------------------------------------------------
--- * Instances
+-- * Instances {{{
+--------------------------------------------------------------------------------
 
 instance Show a => Show (Tile a) where
   show Empty = "'_'"
@@ -386,11 +395,14 @@ instance Show Board where
 instance UniformRange Direction where
   uniformRM (a,b) g = toEnum <$> uniformRM (fromEnum a, fromEnum b) g
 
+-- }}}
 --------------------------------------------------------------------------------
--- * Test
+-- * Test {{{
+--------------------------------------------------------------------------------
 
 roundTripBoard a = a == (boardToRows . boardFromRows) a
 
+-- }}}
 --------------------------------------------------------------------------------
 -- * Main
 --------------------------------------------------------------------------------
@@ -431,15 +443,26 @@ sampleDifficultBoard3 = [
   [With 'U', With 'G', With 'O', With 'Y', With 'T']
               ]
 
-main = do
-    -- timeout 60_000_000 $ do
-    --   -- let sol = solve "REFER" 4 $ annotateCosts "REFER" 4 $ puzzleSearchSpace (boardFromRows sampleBoard)
-    --   -- let sol = solve "WOOER" 4 $ annotateCosts "WOOER" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
-    --   -- let sol = solve "GECKO" 4 $ annotateCosts "GECKO" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
-    --   let sol = solve "BROOM" 0 $ annotateCosts "BROOM" 0 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard3)
-    --   print (sol, length <$> sol)
-    -- exitWith ExitSuccess
+-- CHORD
+sampleBoard4 = [
+  [With 'G', With 'E', With 'A', With 'Y', With 'B'],
+  [With 'U', With 'A', With 'I', With 'O', With 'S'],
+  [With 'K', With 'B', With 'G', With 'R', With 'A'],
+  [With 'L', With 'J', With 'A', With 'V', With 'N'],
+  [Empty, Empty, Empty, Empty, Empty]
+              ]
 
+main = do
+    timeout 60_000_000 $ do
+      -- let sol = solve "REFER" 4 $ annotateCosts "REFER" 4 $ puzzleSearchSpace (boardFromRows sampleBoard)
+      -- let sol = solve "WOOER" 4 $ annotateCosts "WOOER" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
+      -- let sol = solve "GECKO" 4 $ annotateCosts "GECKO" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
+      -- let sol = solve "BROOM" 0 $ annotateCosts "BROOM" 0 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard3)
+      let sol = solve "CHORD" 4 $ annotateCosts "CHORD" 4 $ puzzleSearchSpace (boardFromRows sampleBoard4)
+      print (sol, length <$> sol)
+    exitWith ExitSuccess
+
+-- the rest of main {{{
     ls <- lines <$> readFile "wordle-La.txt"
     wordIx <- randomRIO (0, length ls - 1)
     let word = ls !! wordIx
@@ -480,4 +503,6 @@ main = do
     case readMaybe @(Int, Direction) inp of
       Nothing -> loop game
       Just (ix, dir) -> loop $ fromMaybe game $ move ix dir game
+
+-- }}}
 
