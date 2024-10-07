@@ -44,9 +44,9 @@
                 <a id="restart-qm" onclick="location.reload(); return false;" class="small-option">restart?</a>
             </div>
             <script>
-                const the_board_id = ['I','B','Y','L','W','W','Y','D','M','M','Y','T','N','R','Z','I','V','P','S','J','_','_','_','_','_']
-                const the_hard_board_id = ['P','K','N','_','J','N','U','C','U','_','K','R','D','Y','J','U','B','_','B','_','_','J','S','H','D']
-                const the_word_goal = "URBAN"
+                const the_board_id = ['C','G','F','C','T','K','N','K','V','T','G','Y','F','K','N','O','W','F','L','B','_','_','_','_','_']
+                const the_hard_board_id = ['M','J','Z','W','H','L','D','_','_','C','S','L','T','O','_','_','J','Q','D','G','V','V','C','_','I']
+                const the_word_goal = "FAVOR"
                 document.getElementById("solution").innerHTML = the_word_goal
                 const container = document.getElementById("board-container")
                 for (x of (hardcoreMode ? the_hard_board_id : the_board_id)) {
