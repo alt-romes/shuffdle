@@ -44,9 +44,9 @@
                 <a id="restart-qm" onclick="location.reload(); return false;" class="small-option">restart?</a>
             </div>
             <script>
-                const the_board_id = ['I','H','T','W','C','O','E','Y','Y','N','A','X','T','N','G','X','P','D','V','N','_','_','_','_','_']
-                const the_hard_board_id = ['Q','H','Y','J','G','T','R','_','Q','Z','W','W','K','_','D','_','Z','S','N','_','M','A','K','_','L']
-                const the_word_goal = "MAMBO"
+                const the_board_id = ['U','U','E','A','T','Q','G','I','H','C','T','Z','G','W','C','G','K','I','L','K','_','_','_','_','_']
+                const the_hard_board_id = ['W','U','X','J','Q','Z','T','C','B','W','H','W','P','X','_','_','X','H','_','M','Z','_','G','_','D']
+                const the_word_goal = "TIDAL"
                 document.getElementById("solution").innerHTML = the_word_goal
                 const container = document.getElementById("board-container")
                 for (x of (hardcoreMode ? the_hard_board_id : the_board_id)) {
