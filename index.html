@@ -44,9 +44,9 @@
                 <a id="restart-qm" onclick="location.reload(); return false;" class="small-option">restart?</a>
             </div>
             <script>
-                const the_board_id = ['G','P','U','X','X','J','F','U','B','F','G','R','G','U','U','Y','K','U','U','Q','_','_','_','_','_']
-                const the_hard_board_id = ['K','H','D','_','_','Q','V','_','_','E','V','W','Q','X','J','Y','R','Y','U','_','T','V','V','K','P']
-                const the_word_goal = "GUAVA"
+                const the_board_id = ['E','M','M','R','D','K','L','V','H','Q','S','E','X','Z','N','X','T','I','N','I','_','_','_','_','_']
+                const the_hard_board_id = ['K','_','C','_','I','W','E','T','N','G','_','_','X','D','R','A','G','_','P','L','O','X','O','N','U']
+                const the_word_goal = "TONIC"
                 document.getElementById("solution").innerHTML = the_word_goal
                 const container = document.getElementById("board-container")
                 for (x of (hardcoreMode ? the_hard_board_id : the_board_id)) {
