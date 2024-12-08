@@ -172,14 +172,14 @@ annotateCosts sol solrow = go 0 where
     let !h = costToWin vsol solrow b
         !g = pathCost
         !f = g + h
-     in Node (b, m, g + h*2 {- adhoc, should be f -}) (map (go f) ns)
+     in Node (b, m, f) (map (go f) ns)
 
 solve :: String -> Int {-^ row where solution is -}
       -> Tree (Board, Move, Cost) -> Maybe [Move]
 solve sol solrow init = map snd <$> idaStar where
 
   idaStar =
-    dfid (simplify $ bestFirst init) (25*10) {- Ad-hoc -} {- some average manhattan distance (25) times the average depth, to start near depth 30 instead of 1... -}
+    dfid (bestFirst init) (25*10) {- Ad-hoc -} {- some average manhattan distance (25) times the average depth, to start near depth 30 instead of 1... -}
       where
         bestFirst (Node b bs) =
           Node b $
@@ -464,16 +464,16 @@ sampleBoard4 = [
               ]
 
 main = do
-    timeout 60_000_000 $ do
-      -- Around 20 moves. Easy to solve...
-      -- let sol = solve "REFER" 4 $ annotateCosts "REFER" 4 $ puzzleSearchSpace (boardFromRows sampleBoard)
-      -- let sol = solve "CHORD" 4 $ annotateCosts "CHORD" 4 $ puzzleSearchSpace (boardFromRows sampleBoard4)
-      -- Around 40 moves. Pretty hard...
-      -- let sol = solve "WOOER" 4 $ annotateCosts "WOOER" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
-      let sol = solve "GECKO" 4 $ annotateCosts "GECKO" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
-      -- let sol = solve "BROOM" 0 $ annotateCosts "BROOM" 0 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard3)
-      print (sol, length <$> sol)
-    exitWith ExitSuccess
+    -- timeout 60_000_000 $ do
+    --   -- Around 20 moves. Easy to solve...
+    --   -- let sol = solve "REFER" 4 $ annotateCosts "REFER" 4 $ puzzleSearchSpace (boardFromRows sampleBoard)
+    --   -- let sol = solve "CHORD" 4 $ annotateCosts "CHORD" 4 $ puzzleSearchSpace (boardFromRows sampleBoard4)
+    --   -- Around 40 moves. Pretty hard...
+    --   let sol = solve "WOOER" 4 $ annotateCosts "WOOER" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard)
+    --   -- let sol = solve "GECKO" 4 $ annotateCosts "GECKO" 4 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard2)
+    --   -- let sol = solve "BROOM" 0 $ annotateCosts "BROOM" 0 $ puzzleSearchSpace (boardFromRows sampleDifficultBoard3)
+    --   print (sol, length <$> sol)
+    -- exitWith ExitSuccess
 
 -- the rest of main {{{
     ls <- lines <$> readFile "wordle-La.txt"
