@@ -504,10 +504,10 @@ main = do
     putStrLn $ "Cost to win " ++ show hard_pick
 
     
-    -- If this times out, try generating another board
-    timeout 60_000_000 $ do
-      let sol = solve word (length word - 1) $ annotateCosts word (length word - 1) $ puzzleSearchSpace board
-      putStrLn $ "solved: in " ++ show (length <$> sol) ++ " moves with " ++ show sol
+    -- TODO: If this times out, try generating another board
+    -- timeout 60_000_000 $ do
+    --   let sol = solve word (length word - 1) $ annotateCosts word (length word - 1) $ puzzleSearchSpace board
+    --   putStrLn $ "solved: in " ++ show (length <$> sol) ++ " moves with " ++ show sol
 
   where
   loop game = do
