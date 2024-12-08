@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedRecordDot, RecordWildCards, LambdaCase, TypeApplications, ViewPatterns #-}
-
 import Debug.Trace
 import System.Exit
 import System.Environment
@@ -108,7 +107,8 @@ generateBoard easy word gen = do
 
     solutionBoard = solutionRow `IM.union` holes `IM.union` fullLetters {- union is left biased -}
 
-    loop make_row_empty b nm extra_moves_count
+      -- these bangs fix awful leaks of the board
+    loop !make_row_empty !b !nm !extra_moves_count
       -- On hard mode, first make the solution row empty, then do N extra moves
       -- to mix it up.
       -- On easy mode, stop when the row is empty.
@@ -120,11 +120,12 @@ generateBoard easy word gen = do
       | not make_row_empty && extra_moves_count <= 0
       = pure (b.tiles, nm)
       | otherwise
-      = do (ix, mov) <- genMove b gen
-           let (b',nm') = maybe (b,nm) (,nm+1) $ move ix mov b
+      = do (ix, mov)
+              <- genMove b gen
+           let (b',nm') = maybe (b,nm) (,nm+1) $! move ix mov b
            loop make_row_empty b' nm' (extra_moves_count - 1)
 
-  (initialBoard, nMoves) <- loop True Board{size, tiles=V.fromList $ IM.elems $ solutionBoard} 0 0
+  (initialBoard, nMoves) <- {-# SCC loop #-} loop True Board{size, tiles=V.fromList $ IM.elems $ solutionBoard} 0 0
 
   return (Board{size, tiles=initialBoard}, nMoves, pick)
 
@@ -319,7 +320,8 @@ data Board = Board
   }
   deriving Eq
 
-data Tile a = Empty | With a deriving (Eq, Functor)
+data Tile a = Empty | With !a {- very important bang to not leak a lot of tile maps -}
+  deriving (Eq, Functor)
 
 data Direction = U | R | D | L deriving (Show, Read, Eq, Bounded, Enum)
 
