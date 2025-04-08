@@ -3,9 +3,7 @@ let
   hsc = pkgs.haskell.compiler.ghc910;
   hsp = pkgs.haskell.packages.ghc910;
   hs-shuffdle = hsp.callCabal2nix "shuffled" ./. { };
-in
-{
-  site = pkgs.stdenv.mkDerivation {
+  site-attrs = {
     name = "shuffdle-html";
     src = ./.;
 
@@ -24,7 +22,6 @@ in
       sed -i.bkp "s/the_word_goal = .*$/the_word_goal = \"$WORD\"/" index.html
       sed -i.bkp "s/the_board_id = .*$/the_board_id = $BOARD/" index.html
       sed -i.bkp "s/the_hard_board_id = .*$/the_hard_board_id = $HARDBOARD/" index.html
-
     '';
 
     installPhase = ''
@@ -41,4 +38,9 @@ in
       cp site.webmanifest $out
     '';
   };
+in
+{
+  exe = hs-shuffdle;
+  inherit site-attrs;
+  site = pkgs.stdenv.mkDerivation site-attrs;
 }
