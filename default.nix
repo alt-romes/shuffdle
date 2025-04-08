@@ -19,9 +19,11 @@ let
       echo "BOARD: $BOARD"
       echo "HARDBOARD: $HARDBOARD"
 
-      sed -i.bkp "s/the_word_goal = .*$/the_word_goal = \"$WORD\"/" index.html
-      sed -i.bkp "s/the_board_id = .*$/the_board_id = $BOARD/" index.html
-      sed -i.bkp "s/the_hard_board_id = .*$/the_hard_board_id = $HARDBOARD/" index.html
+      if [ ! -z "$BOARD" ]; then
+        sed -i.bkp "s/the_word_goal = .*$/the_word_goal = \"$WORD\"/" index.html
+        sed -i.bkp "s/the_board_id = .*$/the_board_id = $BOARD/" index.html
+        sed -i.bkp "s/the_hard_board_id = .*$/the_hard_board_id = $HARDBOARD/" index.html
+      fi
     '';
 
     installPhase = ''
