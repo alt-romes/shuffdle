@@ -465,6 +465,7 @@ sampleBoard4 = [
   [Empty, Empty, Empty, Empty, Empty]
               ]
 
+-- The result is sourced to set the variables for substitution.
 main = do
     -- timeout 60_000_000 $ do
     --   -- Around 20 moves. Easy to solve...
@@ -481,7 +482,7 @@ main = do
     ls <- lines <$> readFile "wordle-La.txt"
     wordIx <- randomRIO (0, length ls - 1)
     let word = ls !! wordIx
-    putStrLn $ "target-word:" ++ word
+    putStrLn $ "WORD=\"" ++ word ++ "\""
     let tryGenBoard = do
           -- After 10s kill the generation
           res <- timeout (5*1000*1000) $ do
@@ -491,19 +492,19 @@ main = do
             return ((b,m,p), (hard_b,hard_m,hard_p))
           case res of
             Nothing -> do
-              putStrLn "Retrying..."
+              putStrLn "# Retrying..."
               tryGenBoard
             Just x  -> return x
     ((board, nMoves, pick), (hard_board, hard_nMoves, hard_pick)) <- tryGenBoard
-    putStrLn $ "board-id:" ++ boardId board
-    putStrLn $ "Constructing the solution took " ++ show nMoves ++ " moves"
-    putStrLn $ "Solution pos " ++ show pick
+    putStrLn $ "BOARD=\"" ++ boardId board ++ "\""
+    putStrLn $ "# Constructing the solution took " ++ show nMoves ++ " moves"
+    putStrLn $ "# Solution pos " ++ show pick
 
-    putStrLn $ "hard-board-id:" ++ boardId hard_board
-    putStrLn $ "Constructing the hard board took " ++ show hard_nMoves ++ " moves"
-    putStrLn $ "Hard solution pos " ++ show hard_pick
+    putStrLn $ "HARDBOARD=\"" ++ boardId hard_board ++ "\""
+    putStrLn $ "# Constructing the hard board took " ++ show hard_nMoves ++ " moves"
+    putStrLn $ "# Hard solution pos " ++ show hard_pick
 
-    putStrLn $ "Cost to win " ++ show hard_pick
+    putStrLn $ "# Cost to win " ++ show hard_pick
 
     
     -- TODO: If this times out, try generating another board
