@@ -38,6 +38,9 @@ let
       cp *.png $out
       cp favicon.ico $out
       cp site.webmanifest $out
+
+      # Wordles, to support regeneration
+      cp wordle-La.txt $out
     '';
   };
 in
