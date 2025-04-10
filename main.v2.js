@@ -80,7 +80,7 @@ const chLetter = (l, dir) => {
 const updateTimeToMidnight = () => {
     const now = new Date();
     const midnight = new Date(now);
-    midnight.setHours(23)
+    midnight.setHours(0)
     midnight.setMinutes(0)
     midnight.setSeconds(0)
     const diff = new Date(midnight - now)
